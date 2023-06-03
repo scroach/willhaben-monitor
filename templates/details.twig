@@ -1,0 +1,45 @@
+{# templates/blog/layout.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block content %}
+	<h1>Listing</h1>
+
+	{{ listing.id }}
+	{{ listing.title }}
+
+	<table>
+		<tr>
+			<td>id</td>
+			<td>{{ listing.id }}</td>
+		</tr>
+		<tr>
+			<td>title</td>
+			<td>{{ listing.title }}</td>
+		</tr>
+		<tr>
+			<td>willhabenId</td>
+			<td>{{ listing.willhabenId }}</td>
+		</tr>
+	</table>
+
+
+	<h1>prices</h1>
+	{% for data in listing.listingData %}
+		<div>{{ data.price }} - {{ data.createdAt|date }}</div>
+	{% endfor %}
+
+	<h1>listingdata</h1>
+	{% for data in listing.listingData %}
+		<h2>{{ data.createdAt|date }}</h2>
+		<table>
+			{% for attr in data.data.attributes.attribute %}
+				<tr>
+					<td>{{ attr.name }}</td>
+					<td>{{ attr.values|json_encode }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	{% endfor %}
+
+	hellooo
+{% endblock %}
