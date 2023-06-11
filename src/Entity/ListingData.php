@@ -85,4 +85,9 @@ class ListingData
     {
         return $this->getAttribute('PRICE');
     }
+
+    public function getImages(): array
+    {
+        return explode(';', $this->getAttribute('ALL_IMAGE_URLS'));
+    }
 }

@@ -23,6 +23,13 @@
 	</table>
 
 
+	<h1>images</h1>
+	<div>
+		{% for image in listing.currentListingData.images %}
+			<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px"/>
+		{% endfor %}
+	</div>
+
 	<h1>prices</h1>
 	{% for data in listing.listingData %}
 		<div>{{ data.price }} - {{ data.createdAt|date }}</div>

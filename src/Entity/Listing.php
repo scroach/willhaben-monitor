@@ -131,4 +131,9 @@ class Listing
 
         return $this;
     }
+
+    public function getCurrentListingData(): ?ListingData
+    {
+        return $this->listingData->last() ?: null;
+    }
 }
