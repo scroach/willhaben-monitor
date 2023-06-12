@@ -24,6 +24,22 @@ services:
       MERCURE_PUBLIC_URL: https://${SERVER_NAME:-localhost}/.well-known/mercure
       MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
 
+  messenger:
+    build:
+      context: .
+      target: app_php
+    command: 'bin/console messenger:consume scheduler_default async --limit=10'
+    environment:
+      DATABASE_URL: mysql://root:${MYSQL_PASSWORD:-my-secret-pw}@database:3306/${MYSQL_DB:-app}?serverVersion=8.0
+    healthcheck:
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    depends_on:
+      - php
+
   caddy:
     build:
       context: .

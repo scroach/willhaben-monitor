@@ -48,15 +48,14 @@ RUN set -eux; \
 		zip \
     ;
 
+# add mysql driver
+RUN docker-php-ext-install -j"$(nproc)" pdo_mysql
+
 ###> recipes ###
 ###> doctrine/doctrine-bundle ###
-#RUN apk add --no-cache --virtual .pgsql-deps postgresql-dev; \
-#	docker-php-ext-install -j"$(nproc)" pdo_pgsql; \
-#	apk add --no-cache --virtual .pgsql-rundeps so:libpq.so.5; \
-#	apk del .pgsql-deps
-RUN docker-php-ext-install -j"$(nproc)" pdo_mysql
 ###< doctrine/doctrine-bundle ###
 ###< recipes ###
+
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY --link docker/php/conf.d/app.ini $PHP_INI_DIR/conf.d/
@@ -69,6 +68,9 @@ COPY --link docker/php/docker-healthcheck.sh /usr/local/bin/docker-healthcheck
 RUN chmod +x /usr/local/bin/docker-healthcheck
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 CMD ["docker-healthcheck"]
+
+# cache-invalidator
+RUN echo 2
 
 COPY --link docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 RUN chmod +x /usr/local/bin/docker-entrypoint
@@ -130,3 +132,12 @@ WORKDIR /srv/app
 COPY --from=app_caddy_builder --link /usr/bin/caddy /usr/bin/caddy
 COPY --from=app_php --link /srv/app/public public/
 COPY --link docker/caddy/Caddyfile /etc/caddy/Caddyfile
+
+# messenger image
+FROM app_php AS symfony_messenger
+WORKDIR /srv/app/
+
+COPY --link docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
+
+ENTRYPOINT ["docker-entrypoint"]

@@ -2,11 +2,10 @@
 
 namespace App\Message;
 
-class ScrapeMessage
+class FetchAllListingsMessage
 {
-
     public function __construct(
-        private string $message
+        private readonly string $message
     ) {
     }
 

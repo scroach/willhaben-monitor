@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\Entity\Listing;
-use App\Message\ScrapeMessage;
+use App\Message\DownloadImagesMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -73,6 +73,7 @@ class WillhabenScraper
         $currentPage = 1;
 
         do {
+            $listings = [];
             $listingsResult = $this->doSearchRequest($currentPage);
             foreach ($listingsResult->getListings() as $listing) {
                 $existing = $this->entityManager->getRepository(Listing::class)->findOneBy(['willhabenId' => $listing->getWillhabenId()]);
@@ -82,9 +83,14 @@ class WillhabenScraper
                     $listing = $existing;
                 }
 
+                $listings[] = $listing;
                 $this->entityManager->persist($listing);
             }
             $this->entityManager->flush();
+
+            foreach ($listings as $listing) {
+                $this->bus->dispatch(new DownloadImagesMessage($listing->getId()));
+            }
 
             $maxPage = $listingsResult->getMaxPage();
             $currentPage++;
@@ -165,13 +171,14 @@ class WillhabenScraper
         $imageBaseUrl = 'https://cache.willhaben.at/mmo/';
 
         $filesystem = new Filesystem();
-        foreach ($imageUrls as $imageUrl) {
+        foreach ($imageUrls as $i => $imageUrl) {
             $localPath = $this->imageDir.$imageUrl;
             $remoteUrl = $imageBaseUrl.$imageUrl;
 
             if (!$filesystem->exists($localPath)) {
+                //TODO try catch
                 //TODO guzzle with proxy?
-                $this->logger->info('Downloading image '.$imageUrl);
+                $this->logger->info('Downloading image '.$imageUrl.' ('.($i+1).'/'.count($imageUrls).')');
                 $filesystem->appendToFile($localPath, file_get_contents($remoteUrl));
                 sleep(rand(10, 30));
             } else {
