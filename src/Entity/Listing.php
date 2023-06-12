@@ -136,4 +136,8 @@ class Listing
     {
         return $this->listingData->last() ?: null;
     }
+    public function getTitleImage(): ?string
+    {
+        return $this->getCurrentListingData()?->getImages()[0];
+    }
 }

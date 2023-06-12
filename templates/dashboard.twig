@@ -6,4 +6,33 @@
 
 	<a href="{{ url('dispatch') }}">Fetch all listings now!</a>
 
+	<h2>{{ listings|length }} Listings</h2>
+
+	<table border="1">
+		<thead>
+		<tr>
+			<th>Title</th>
+			<th>First seen</th>
+			<th>Last seen</th>
+			<th>Pics</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for listing in listings %}
+		<tr>
+			<td>
+				<a href="{{ url('details', {id: listing.id}) }}">
+					{{ listing.title }}
+				</a>
+			</td>
+			<td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
+			<td>{{ listing.lastSeen|date('d.m.Y H:i:s') }}</td>
+			<td>
+				<img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px"/>
+			</td>
+		</tr>
+		</tbody>
+		{% endfor %}
+	</table>
+
 {% endblock %}
