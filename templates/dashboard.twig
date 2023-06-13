@@ -28,7 +28,7 @@
 			<td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
 			<td>{{ listing.lastSeen|date('d.m.Y H:i:s') }}</td>
 			<td>
-				<img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px"/>
+				<img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px" loading="lazy" />
 			</td>
 		</tr>
 		</tbody>

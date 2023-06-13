@@ -26,7 +26,7 @@
 	<h1>images</h1>
 	<div>
 		{% for image in listing.currentListingData.images %}
-			<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px"/>
+			<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px" loading="lazy" />
 		{% endfor %}
 	</div>
 
