@@ -81,13 +81,43 @@ class ListingData
         return null;
     }
 
+    public function getAttributeAsString(string $key): string
+    {
+        foreach ($this->data['attributes']['attribute'] as $attribute) {
+            if($key === $attribute['name']) {
+                return implode(', ', $attribute['values']);
+            }
+        }
+        return '';
+    }
+
     public function getPrice(): ?float
     {
         return $this->getAttribute('PRICE');
     }
 
+    public function getRooms(): ?int
+    {
+        return $this->getAttribute('NUMBER_OF_ROOMS');
+    }
+
     public function getImages(): array
     {
         return explode(';', $this->getAttribute('ALL_IMAGE_URLS'));
+    }
+
+    public function getLivingSize(): ?float
+    {
+        return $this->getAttribute('ESTATE_SIZE');
+    }
+
+    public function getFreeArea(): ?float
+    {
+        return $this->getAttribute('FREE_AREA/FREE_AREA_AREA_TOTAL');
+    }
+
+    public function getFreeAreaType(): ?string
+    {
+        return $this->getAttributeAsString('FREE_AREA_TYPE_NAME');
     }
 }

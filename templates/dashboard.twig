@@ -4,11 +4,11 @@
 {% block content %}
 	<h1>Dashboard</h1>
 
-	<a href="{{ url('dispatch') }}">Fetch all listings now!</a>
+	<a class="btn btn-primary" href="{{ url('dispatch') }}">Fetch all listings now!</a>
 
 	<h2>{{ listings|length }} Listings</h2>
 
-	<table border="1">
+	<table class="table table">
 		<thead>
 		<tr>
 			<th>Title</th>

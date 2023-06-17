@@ -140,4 +140,14 @@ class Listing
     {
         return $this->getCurrentListingData()?->getImages()[0];
     }
+
+    public function getMaxPrice(): ?float
+    {
+        return max(array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray()));
+    }
+
+    public function getMinPrice(): ?float
+    {
+        return min(array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray()));
+    }
 }

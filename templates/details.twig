@@ -1,52 +1,78 @@
-{# templates/blog/layout.html.twig #}
 {% extends 'base.html.twig' %}
 
 {% block content %}
-	<h1>Listing</h1>
 
-	{{ listing.id }}
-	{{ listing.title }}
+	<a class="btn btn-outline-secondary" href="{{ path('dashboard') }}">Zurück</a>
 
-	<table>
-		<tr>
-			<td>id</td>
-			<td>{{ listing.id }}</td>
-		</tr>
-		<tr>
-			<td>title</td>
-			<td>{{ listing.title }}</td>
-		</tr>
-		<tr>
-			<td>willhabenId</td>
-			<td>{{ listing.willhabenId }}</td>
-		</tr>
-	</table>
+	<h1>{{ listing.title }}</h1>
+
+	<span class="badge bg-danger">{{ listing.maxPrice|format_number }} € max</span>
+	<span class="badge bg-success">{{ listing.minPrice|format_number }} € min</span>
+
+	<a class="btn btn-primary"
+	   href="https://www.willhaben.at/iad/immobilien/d/haus-kaufen/steiermark/xxx-{{ listing.willhabenId }}/"
+	   target="_blank">
+		Willhaben öffnen
+	</a>
 
 
-	<h1>images</h1>
+	<h1>Fotos</h1>
 	<div>
 		{% for image in listing.currentListingData.images %}
 			<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px" loading="lazy" />
 		{% endfor %}
 	</div>
 
-	<h1>prices</h1>
-	{% for data in listing.listingData %}
+	<h1>Preise</h1>
+	{% for data in listing.listingData|reverse %}
 		<div>{{ data.price }} - {{ data.createdAt|date }}</div>
 	{% endfor %}
 
-	<h1>listingdata</h1>
-	{% for data in listing.listingData %}
-		<h2>{{ data.createdAt|date }}</h2>
-		<table>
-			{% for attr in data.data.attributes.attribute %}
-				<tr>
-					<td>{{ attr.name }}</td>
-					<td>{{ attr.values|json_encode }}</td>
-				</tr>
-			{% endfor %}
-		</table>
-	{% endfor %}
 
-	hellooo
+	<h1>Historische Daten</h1>
+	<div class="card">
+		<div class="card-body">
+			<div class="row">
+				<div class="col-2">
+					<div class="nav flex-column nav-pills me-3" id="mytabs" role="tablist" aria-orientation="vertical">
+						{% for key, data in listing.listingData|reverse %}
+							<button class="nav-link {{ key == 0 ? 'active' : '' }}" data-bs-toggle="pill" data-bs-target="#listings-tab-{{ key }}" type="button" role="tab">{{ data.createdAt|date }}</button>
+						{% endfor %}
+					</div>
+				</div>
+
+				<div class="col-10">
+					<div class="tab-content" id="v-pills-tabContent">
+						{% for key, data in listing.listingData|reverse %}
+							<div class="tab-pane fade {{ key == 0 ? 'show active' : '' }}" id="listings-tab-{{ key }}" role="tabpanel">
+
+								<span class="badge bg-secondary">{{ data.price|format_number }} €</span>
+								<span class="badge bg-secondary">{{ data.rooms }} Zimmer</span>
+								<span class="badge bg-secondary">{{ data.livingSize }} m² Wohnfläche</span>
+								<span class="badge bg-secondary">{{ (data.price/data.livingSize)|format_number }} €/m²</span>
+								<span class="badge bg-secondary">{{ data.freeArea }} m² {{ data.freeAreaType }}</span>
+
+								<br>
+								<br>
+
+								<table class="table table-bordered" style="word-break: break-all;">
+									{% for attr in data.data.attributes.attribute %}
+										<tr>
+											<td style="width: 300px">{{ attr.name }}</td>
+											<td>{{ attr.values|json_encode }}</td>
+										</tr>
+									{% endfor %}
+								</table>
+							</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const bsTab = new bootstrap.Tab('#mytabs')
+	</script>
+
 {% endblock %}
