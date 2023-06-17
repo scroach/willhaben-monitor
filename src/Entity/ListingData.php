@@ -93,7 +93,17 @@ class ListingData
 
     public function getPrice(): ?float
     {
-        return $this->getAttribute('PRICE');
+        // PRICE might be string "Preis auf Anfrage"
+        return floatval($this->getAttribute('PRICE'));
+    }
+
+    public function getPricePerSqm(): ?float
+    {
+        if($this->getLivingSize() > 0) {
+        return $this->getPrice() / $this->getLivingSize();
+        } else {
+            return INF;
+        }
     }
 
     public function getRooms(): ?int
@@ -120,4 +130,5 @@ class ListingData
     {
         return $this->getAttributeAsString('FREE_AREA_TYPE_NAME');
     }
+
 }

@@ -49,7 +49,7 @@
 								<span class="badge bg-secondary">{{ data.price|format_number }} €</span>
 								<span class="badge bg-secondary">{{ data.rooms }} Zimmer</span>
 								<span class="badge bg-secondary">{{ data.livingSize }} m² Wohnfläche</span>
-								<span class="badge bg-secondary">{{ (data.price/data.livingSize)|format_number }} €/m²</span>
+								<span class="badge bg-secondary">{{ data.pricePerSqm|format_number }} €/m²</span>
 								<span class="badge bg-secondary">{{ data.freeArea }} m² {{ data.freeAreaType }}</span>
 
 								<br>
