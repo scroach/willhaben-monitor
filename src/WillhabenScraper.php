@@ -41,6 +41,7 @@ class WillhabenScraper
     private function fetchRandomProxy(): string
     {
         if (!$this->proxies) {
+            echo "\n\nno proxies left... fetching new ones...\n\n";
             $this->proxies = $this->fetchProxies();
         }
 
@@ -66,6 +67,7 @@ class WillhabenScraper
     private function blacklistProxy(string $proxy): void
     {
         unset($this->proxies[array_search($proxy, $this->proxies, true)]);
+        echo "\n\nbanned proxy, got ".count($this->proxies)." left\n\n";
     }
 
     private function searchPages()
@@ -78,6 +80,7 @@ class WillhabenScraper
             foreach ($listingsResult->getListings() as $listing) {
                 $existing = $this->entityManager->getRepository(Listing::class)->findOneBy(['willhabenId' => $listing->getWillhabenId()]);
                 if ($existing) {
+                    //TODO process update, add more metadata directly
                     $existing->addListingData($listing->getListingData()->first());
                     $existing->setLastSeen(new \DateTimeImmutable());
                     $listing = $existing;
@@ -89,6 +92,7 @@ class WillhabenScraper
             $this->entityManager->flush();
 
             foreach ($listings as $listing) {
+                //TODO check first if actually has new images
                 $this->bus->dispatch(new DownloadImagesMessage($listing->getId()));
             }
 
@@ -115,6 +119,7 @@ class WillhabenScraper
             do {
                 try {
                     // https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote?0%5BareaId%5D=6&1%5BNO_OF_ROOMS_BUCKET%5D=4X4&2%5BNO_OF_ROOMS_BUCKET%5D=5X5&3%5BNO_OF_ROOMS_BUCKET%5D=6X9&4%5BESTATE_SIZE%2FLIVING_AREA_FROM%5D=95&5%5Brows%5D=200&6%5Bpage%5D=1
+                    // https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote?0%5BareaId%5D=6&1%5BNO_OF_ROOMS_BUCKET%5D=4X4&2%5BNO_OF_ROOMS_BUCKET%5D=5X5&3%5BNO_OF_ROOMS_BUCKET%5D=6X9&4%5BESTATE_SIZE/LIVING_AREA_FROM%5D=95&5%5Brows%5D=200&6%5Bpage%5D=1&sfId=60919f25-e533-4c18-80d9-6fcea1d01901&rows=30&isNavigation=true&areaId=6&page=1
                     $url = 'https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote';
                     $params = [
                         'areaId' => 6,
@@ -145,12 +150,19 @@ class WillhabenScraper
                     $proxyRetry++;
                     sleep(10);
                 } catch (RequestException $exception) {
+                    $failedBody = (string) $exception->getResponse()->getBody();
                     $this->debugLog($requestId, $exception->getMessage(), 'Request failed');
-                    $this->debugLog($requestId, (string)$exception->getResponse()->getBody(), 'Response Body');
+                    $this->debugLog($requestId, $failedBody, 'Response Body');
                     $this->debugLog($requestId, json_encode($exception->getResponse()->getHeaders(), JSON_PRETTY_PRINT), 'Response Body');
+
+                    if (str_contains($failedBody, 'IP address is blocked') || str_contains($failedBody, 'IP-Adresse wurde blockiert')) {
+                        echo "IP / proxy is blocked by willhaben, no need to retry...\r\n";
+                        $proxyRetry = self::MAX_RETRIES_PER_PROXY;
+                    } else {
                     echo "request failed, retrying in 10... ".$exception->getMessage()."\r\n";
                     $proxyRetry++;
                     sleep(10);
+                    }
                 } catch (GuzzleException $exception) {
                     $proxyRetry++;
                     rt($exception);
@@ -180,18 +192,18 @@ class WillhabenScraper
                 //TODO guzzle with proxy?
                 $this->logger->info('Downloading image '.$imageUrl.' ('.($i+1).'/'.count($imageUrls).')');
                 $filesystem->appendToFile($localPath, file_get_contents($remoteUrl));
-                sleep(rand(10, 30));
             } else {
                 $this->logger->info('Skipping existing image '.$imageUrl);
             }
         }
+
+        sleep(rand(10, 30));
     }
 
     private function debugLog(int $requestId, string $content, string $header = ''): void
     {
         $filesystem = new Filesystem();
         $logFile = $this->debugDir.'request_'.$requestId.'.log';
-
 
         if ($header) {
             $filesystem->appendToFile($logFile, "###############################################\r\n");
