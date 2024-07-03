@@ -34,7 +34,7 @@
 		<div class="card-body">
 			<div class="row">
 				<div class="col-2">
-					<div class="nav flex-column nav-pills me-3" id="mytabs" role="tablist" aria-orientation="vertical">
+				    <div class="nav flex-column nav-pills me-3" id="mytabs" role="tablist" aria-orientation="vertical" style="position: sticky; top: 1em;">
 						{% for key, data in listing.listingData|reverse %}
 							<button class="nav-link {{ key == 0 ? 'active' : '' }}" data-bs-toggle="pill" data-bs-target="#listings-tab-{{ key }}" type="button" role="tab">{{ data.createdAt|date }}</button>
 						{% endfor %}
