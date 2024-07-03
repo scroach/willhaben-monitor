@@ -29,7 +29,8 @@ class Listing
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
-    #[ORM\OneToMany(mappedBy: 'listing', targetEntity: ListingData::class, orphanRemoval: true, cascade: ['persist'])]
+    #[ORM\OneToMany(mappedBy: 'listing', targetEntity: ListingData::class, orphanRemoval: true, cascade: ['persist'], fetch: 'EXTRA_LAZY')]
+    #[ORM\OrderBy(['created_at' => 'DESC'])]
     private Collection $listingData;
 
     #[ORM\Column(length: 255)]
@@ -151,7 +152,7 @@ class Listing
 
     public function getCurrentListingData(): ?ListingData
     {
-        return $this->listingData->last() ?: null;
+        return $this->listingData->get(0) ?: null;
     }
 
     public function getCity(): ?string
