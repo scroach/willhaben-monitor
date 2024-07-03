@@ -131,4 +131,14 @@ class ListingData
         return $this->getAttributeAsString('FREE_AREA_TYPE_NAME');
     }
 
+    public function getCity(): ?string
+    {
+        return $this->getAttributeAsString('LOCATION');
+    }
+
+    public function getZip(): ?string
+    {
+        return $this->getAttributeAsString('POSTCODE');
+    }
+
 }

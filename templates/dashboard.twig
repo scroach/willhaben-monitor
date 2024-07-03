@@ -6,15 +6,23 @@
 
 	<a class="btn btn-primary" href="{{ url('dispatch') }}">Fetch all listings now!</a>
 
-	<h2>{{ listings|length }} Listings</h2>
+	{% if showAll %}
+		<h2>{{ listings|length }} Listings total</h2>
+		<a href="{{ path('dashboard') }}" class="small">show only last month</a>
+	{% else %}
+		<h2>{{ listings|length }} Listings seen from {{ from|format_date }} to {{ to|format_date }}</h2>
+		<a href="{{ path('dashboard', {showAll: true}) }}" class="small">show all</a>
+	{% endif %}
 
 	<table class="table table">
 		<thead>
 		<tr>
 			<th>Title</th>
+			<th>m²</th>
 			<th>Preis Max</th>
 			<th>Preis Min</th>
-			<th>€/m²</th>
+			<th>€/m² max</th>
+			<th>€/m² min</th>
 			<th>First seen</th>
 			<th>Last seen</th>
 			<th>Pics</th>
@@ -28,9 +36,11 @@
 					{{ listing.title }}
 				</a>
 			</td>
-			<td>{{ listing.maxPrice|format_number }}</td>
-			<td>{{ listing.minPrice|format_number }}</td>
-			<td>{{ listing.currentListingData.pricePerSqm|format_number({fraction_digit: 0}) }}</td>
+			<td>{{ listing.area is null ? '?' : listing.area|format_number }}</td>
+			<td>{{ listing.priceMax is null ? '?' : listing.priceMax|format_number }}</td>
+			<td>{{ listing.priceMin is null ? '?' : listing.priceMin|format_number }}</td>
+			<td>{{ listing.area ? (listing.priceMax/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
+			<td>{{ listing.area ? (listing.priceMin/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
 			<td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
 			<td>{{ listing.lastSeen|date('d.m.Y H:i:s') }}</td>
 			<td>

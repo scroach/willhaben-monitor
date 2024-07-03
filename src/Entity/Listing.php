@@ -32,6 +32,21 @@ class Listing
     #[ORM\OneToMany(mappedBy: 'listing', targetEntity: ListingData::class, orphanRemoval: true, cascade: ['persist'])]
     private Collection $listingData;
 
+    #[ORM\Column(length: 255)]
+    private ?string $city = null;
+    #[ORM\Column(length: 50)]
+    private ?string $zip = null;
+    #[ORM\Column(length: 255)]
+    private ?string $titleImage = null;
+    #[ORM\Column]
+    private ?float $priceMin = null;
+    #[ORM\Column]
+    private ?float $priceMax = null;
+    #[ORM\Column]
+    private ?float $priceCurrent = null;
+    #[ORM\Column]
+    private ?float $area = null;
+
     public function __construct()
     {
         $this->listingData = new ArrayCollection();
@@ -136,18 +151,90 @@ class Listing
     {
         return $this->listingData->last() ?: null;
     }
+
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function setCity(?string $city): void
+    {
+        $this->city = $city;
+    }
+
+    public function getZip(): ?string
+    {
+        return $this->zip;
+    }
+
+    public function setZip(?string $zip): void
+    {
+        $this->zip = $zip;
+    }
+
+    public function getPriceMin(): ?float
+    {
+        return $this->priceMin;
+    }
+
+    public function setPriceMin(?float $priceMin): void
+    {
+        $this->priceMin = $priceMin;
+    }
+
+    public function getPriceMax(): ?float
+    {
+        return $this->priceMax;
+    }
+
+    public function setPriceMax(?float $priceMax): void
+    {
+        $this->priceMax = $priceMax;
+    }
+
+    public function getArea(): ?float
+    {
+        return $this->area;
+    }
+
+    public function setArea(?float $area): void
+    {
+        $this->area = $area;
+    }
+
+    public function getPriceCurrent(): ?float
+    {
+        return $this->priceCurrent;
+    }
+
+    public function setPriceCurrent(?float $priceCurrent): void
+    {
+        $this->priceCurrent = $priceCurrent;
+    }
+
     public function getTitleImage(): ?string
     {
-        return $this->getCurrentListingData()?->getImages()[0];
+        return $this->titleImage;
     }
 
-    public function getMaxPrice(): ?float
+    public function setTitleImage(?string $titleImage): void
     {
-        return max(array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray()));
+        $this->titleImage = $titleImage;
     }
 
-    public function getMinPrice(): ?float
+
+    public function updateAggregatedData(): void
     {
-        return min(array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray()));
+        $prices = array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray());
+        // filter zero values
+        $prices = array_filter($prices);
+        $this->setPriceMin(count($prices) ? min($prices) : null);
+        $this->setPriceMax(count($prices) ? max($prices) : null);
+
+        $this->setCity($this->getCurrentListingData()->getCity());
+        $this->setZip($this->getCurrentListingData()->getZip());
+        $this->setArea($this->getCurrentListingData()->getLivingSize());
+        $this->setTitleImage($this->getCurrentListingData()?->getImages()[0]);
     }
+
 }

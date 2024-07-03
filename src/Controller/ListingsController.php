@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Listing;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,8 +21,11 @@ class ListingsController extends AbstractController
     }
 
     #[Route('/listings/{id}', name: 'details')]
-    public function details(Listing $listing): Response
+    public function details(Listing $listing, EntityManagerInterface $em): Response
     {
+        $listing->updateAggregatedData();
+        $em->flush();
+
         return $this->render('details.twig', ['listing' => $listing]);
     }
 }

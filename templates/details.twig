@@ -6,8 +6,8 @@
 
 	<h1>{{ listing.title }}</h1>
 
-	<span class="badge bg-danger">{{ listing.maxPrice|format_number }} € max</span>
-	<span class="badge bg-success">{{ listing.minPrice|format_number }} € min</span>
+	<span class="badge bg-danger">{{ listing.priceMax|format_number }} € max</span>
+	<span class="badge bg-success">{{ listing.priceMin|format_number }} € min</span>
 
 	<a class="btn btn-primary"
 	   href="https://www.willhaben.at/iad/immobilien/d/haus-kaufen/steiermark/xxx-{{ listing.willhabenId }}/"
