@@ -45,6 +45,8 @@ class Listing
     #[ORM\Column]
     private ?float $priceCurrent = null;
     #[ORM\Column]
+    private ?float $priceCurrentPerSqm = null;
+    #[ORM\Column]
     private ?float $area = null;
 
     public function __construct()
@@ -222,18 +224,34 @@ class Listing
         $this->titleImage = $titleImage;
     }
 
+    public function getPriceCurrentPerSqm(): ?float
+    {
+        return $this->priceCurrentPerSqm;
+    }
+
+    public function setPriceCurrentPerSqm(?float $priceCurrentPerSqm): void
+    {
+        $this->priceCurrentPerSqm = $priceCurrentPerSqm;
+    }
 
     public function updateAggregatedData(): void
     {
         $prices = array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray());
         // filter zero values
-        $prices = array_filter($prices);
+        $prices = array_filter($prices, fn(float $price) => $price > 10);
         $this->setPriceMin(count($prices) ? min($prices) : null);
         $this->setPriceMax(count($prices) ? max($prices) : null);
+        $priceCurrent = $this->getCurrentListingData()?->getPrice();
+        $this->setPriceCurrent($priceCurrent > 10 ? $priceCurrent : null);
+        $this->setArea($this->getCurrentListingData()->getLivingSize());
+
+        $this->setPriceCurrentPerSqm(null);
+        if ($priceCurrent > 10 && $this->getArea() > 10) {
+            $this->setPriceCurrentPerSqm($priceCurrent / $this->getArea());
+        }
 
         $this->setCity($this->getCurrentListingData()->getCity());
         $this->setZip($this->getCurrentListingData()->getZip());
-        $this->setArea($this->getCurrentListingData()->getLivingSize());
         $this->setTitleImage($this->getCurrentListingData()?->getImages()[0]);
     }
 

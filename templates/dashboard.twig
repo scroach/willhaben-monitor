@@ -19,8 +19,10 @@
 		<tr>
 			<th>Title</th>
 			<th>m²</th>
-			<th>Preis Max</th>
-			<th>Preis Min</th>
+			<th>€ current</th>
+			<th>€/m² current</th>
+			<th>€ Max</th>
+			<th>€ Min</th>
 			<th>€/m² max</th>
 			<th>€/m² min</th>
 			<th>First seen</th>
@@ -37,6 +39,8 @@
 				</a>
 			</td>
 			<td>{{ listing.area is null ? '?' : listing.area|format_number }}</td>
+			<td>{{ listing.priceCurrent is null ? '?' : listing.priceCurrent|format_number }}</td>
+			<td>{{ listing.priceCurrentPerSqm is null ? '?' : listing.priceCurrentPerSqm|format_number }}</td>
 			<td>{{ listing.priceMax is null ? '?' : listing.priceMax|format_number }}</td>
 			<td>{{ listing.priceMin is null ? '?' : listing.priceMin|format_number }}</td>
 			<td>{{ listing.area ? (listing.priceMax/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
