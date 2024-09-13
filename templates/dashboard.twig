@@ -6,6 +6,15 @@
 
 	<a class="btn btn-primary" href="{{ url('dispatch') }}">Fetch all listings now!</a>
 
+	<div class="float-end">
+			{{ form_start(form) }}
+		<div class="row row-cols-lg-auto g-3 align-items-center">
+			<div class="col">{{ form_widget(form.willhabenId) }}</div>
+			<div class="col">{{ form_widget(form.submit) }}</div>
+		</div>
+			{{ form_end(form) }}
+	</div>
+
 	{% if showAll %}
 		<h2>{{ listings|length }} Listings total</h2>
 		<a href="{{ path('dashboard') }}" class="small">show only last month</a>

@@ -134,6 +134,7 @@ class Listing
             $this->listingData->add($listingData);
             $listingData->setListing($this);
         }
+        $this->updateAggregatedData();
 
         return $this;
     }
@@ -152,7 +153,10 @@ class Listing
 
     public function getCurrentListingData(): ?ListingData
     {
-        return $this->listingData->get(0) ?: null;
+        $data = $this->listingData->toArray();
+        usort($data, fn ($a, $b) => $a <=> $b);
+
+        return end($data) ?: null;
     }
 
     public function getCity(): ?string
@@ -254,6 +258,7 @@ class Listing
         $this->setCity($this->getCurrentListingData()->getCity());
         $this->setZip($this->getCurrentListingData()->getZip());
         $this->setTitleImage($this->getCurrentListingData()?->getImages()[0]);
+        $this->setTitle($this->getCurrentListingData()?->getTitle() ?? $this->getTitle());
     }
 
 }

@@ -5,9 +5,15 @@
 	<a class="btn btn-outline-secondary" href="{{ path('dashboard') }}">Zurück</a>
 
 	<h1>{{ listing.title }}</h1>
+	{{ listing.priceCurrent }}
 
 	<span class="badge bg-danger">{{ listing.priceMax|format_number }} € max</span>
 	<span class="badge bg-success">{{ listing.priceMin|format_number }} € min</span>
+	<span class="badge bg-secondary">{{ listing.area is null ? '?' : listing.area|format_number }} m²</span>
+	<span class="badge bg-secondary">{{ listing.priceCurrent is null ? '?' : listing.priceCurrent|format_number }} € aktuell</span>
+	<span class="badge bg-secondary">{{ (listing.area and listing.priceCurrent) ? (listing.priceCurrent/listing.area)|format_number({fraction_digit: 0}) : '?' }} €/m²</span>
+	<span class="badge bg-secondary">First seen {{ listing.firstSeen|date('d.m.Y H:i:s') }}</span>
+	<span class="badge bg-secondary">Last seen {{ listing.lastSeen|date('d.m.Y H:i:s') }}</span>
 
 	<a class="btn btn-primary"
 	   href="https://www.willhaben.at/iad/immobilien/d/haus-kaufen/steiermark/xxx-{{ listing.willhabenId }}/"
@@ -34,7 +40,7 @@
 				<div class="col-2">
 					<div style="max-height: 90vh; overflow: scroll; position: sticky; top: 1em">
 						<div class="nav flex-column nav-pills me-3" id="mytabs" role="tablist" aria-orientation="vertical" >
-							{% for key, data in listing.listingData|reverse %}
+							{% for key, data in listing.listingData %}
 								<button class="nav-link {{ key == 0 ? 'active' : '' }}" data-bs-toggle="pill" data-bs-target="#listings-tab-{{ key }}" type="button" role="tab">{{ data.createdAt|date }}</button>
 							{% endfor %}
 						</div>
@@ -43,7 +49,7 @@
 
 				<div class="col-10">
 					<div class="tab-content" id="v-pills-tabContent">
-						{% for key, data in listing.listingData|reverse %}
+						{% for key, data in listing.listingData %}
 							<div class="tab-pane fade {{ key == 0 ? 'show active' : '' }}" id="listings-tab-{{ key }}" role="tabpanel">
 
 								<span class="badge bg-secondary">{{ data.price|format_number }} €</span>

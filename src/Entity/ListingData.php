@@ -111,6 +111,11 @@ class ListingData
         return $this->getAttribute('NUMBER_OF_ROOMS');
     }
 
+    public function getTitle(): ?string
+    {
+        return $this->data['description'] ?? null;
+    }
+
     public function getImages(): array
     {
         return explode(';', $this->getAttribute('ALL_IMAGE_URLS'));
