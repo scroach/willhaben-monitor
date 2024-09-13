@@ -23,10 +23,8 @@
 		{% endfor %}
 	</div>
 
-	<h1>Preise</h1>
-	{% for data in listing.listingData|reverse %}
-		<div>{{ data.price }} - {{ data.createdAt|date }}</div>
-	{% endfor %}
+	<h1>Preisverlauf</h1>
+	<div id="price-chart"></div>
 
 
 	<h1>Historische Daten</h1>
@@ -34,10 +32,12 @@
 		<div class="card-body">
 			<div class="row">
 				<div class="col-2">
-				    <div class="nav flex-column nav-pills me-3" id="mytabs" role="tablist" aria-orientation="vertical" style="position: sticky; top: 1em;">
-						{% for key, data in listing.listingData|reverse %}
-							<button class="nav-link {{ key == 0 ? 'active' : '' }}" data-bs-toggle="pill" data-bs-target="#listings-tab-{{ key }}" type="button" role="tab">{{ data.createdAt|date }}</button>
-						{% endfor %}
+					<div style="max-height: 90vh; overflow: scroll; position: sticky; top: 1em">
+						<div class="nav flex-column nav-pills me-3" id="mytabs" role="tablist" aria-orientation="vertical" >
+							{% for key, data in listing.listingData|reverse %}
+								<button class="nav-link {{ key == 0 ? 'active' : '' }}" data-bs-toggle="pill" data-bs-target="#listings-tab-{{ key }}" type="button" role="tab">{{ data.createdAt|date }}</button>
+							{% endfor %}
+						</div>
 					</div>
 				</div>
 
@@ -71,8 +71,85 @@
 		</div>
 	</div>
 
+	{% set firstSeen = listing.firstSeen.timestamp %}
+	{% set lastSeen = listing.lastSeen.timestamp %}
+
+	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 	<script>
-		const bsTab = new bootstrap.Tab('#mytabs')
+		const bsTab = new bootstrap.Tab('#mytabs');
+
+		let options = {
+			series: [
+				{
+					name: "Preise",
+					data: [
+						{% for data in listing.listingData %}
+							[{{ data.createdAt.timestamp * 1000 }}, {{ data.price }}],
+						{% endfor %}
+					]
+				},
+			],
+			chart: {
+				height: 350,
+				type: 'line',
+				dropShadow: {
+					enabled: true,
+					color: '#000',
+					top: 18,
+					left: 7,
+					blur: 10,
+					opacity: 0.2
+				},
+				zoom: {
+					enabled: false
+				},
+				toolbar: {
+					show: false
+				}
+			},
+			tooltip: {
+				x: {
+					format: 'dd MMMM yyyy'
+				}
+			},
+			colors: ['#77B6EA', '#545454'],
+			stroke: {
+				curve: 'smooth'
+			},
+			grid: {
+				borderColor: '#e7e7e7',
+				row: {
+					colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+					opacity: 0.5
+				},
+			},
+			markers: {
+				size: 1
+			},
+			xaxis: {
+				title: {
+					text: 'Datum'
+				},
+				type: 'datetime',
+				min: {{ (firstSeen - (60*60*24*30))*1000 }},
+				max: {{ (lastSeen + (60*60*24*30))*1000 }},
+				tickAmount: 6,
+			},
+			yaxis: {
+				title: {
+					text: 'Preis'
+				},
+			},
+			legend: {
+				position: 'top',
+				horizontalAlign: 'right',
+				floating: true,
+				offsetY: -25,
+				offsetX: -5
+			}
+		};
+
+		(new ApexCharts(document.querySelector("#price-chart"), options)).render();
 	</script>
 
 {% endblock %}
