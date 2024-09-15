@@ -68,6 +68,15 @@ class WillhabenScraper
     {
         unset($this->proxies[array_search($proxy, $this->proxies, true)]);
         echo "\n\nbanned proxy, got ".count($this->proxies)." left\n\n";
+
+        try {
+            $badProxies = unserialize(file_get_contents('bad_proxies.txt'));
+            $badProxies = $badProxies ?: [];
+            $badProxies[$proxy]++;
+            file_put_contents('bad_proxies.txt', serialize($badProxies));
+        } catch (\Throwable $e) {
+            $this->logger->error($e->getMessage());
+        }
     }
 
     private function searchPages()
@@ -159,9 +168,9 @@ class WillhabenScraper
                         echo "IP / proxy is blocked by willhaben, no need to retry...\r\n";
                         $proxyRetry = self::MAX_RETRIES_PER_PROXY;
                     } else {
-                    echo "request failed, retrying in 10... ".$exception->getMessage()."\r\n";
-                    $proxyRetry++;
-                    sleep(10);
+                        echo "request failed, retrying in 10... ".$exception->getMessage()."\r\n";
+                        $proxyRetry++;
+                        sleep(10);
                     }
                 } catch (GuzzleException $exception) {
                     $proxyRetry++;
@@ -169,6 +178,7 @@ class WillhabenScraper
                     sleep(10);
                 }
             } while ($proxyRetry < self::MAX_RETRIES_PER_PROXY);
+
             $this->blacklistProxy($randomProxy);
             echo "proxy: $randomProxy is no good :(\r\n";
         } while ($requestRetry < self::MAX_RETRIES);
@@ -182,6 +192,7 @@ class WillhabenScraper
         $imageUrls = explode(';', $imageUrls);
         $imageBaseUrl = 'https://cache.willhaben.at/mmo/';
 
+        $downloadedSomething = false;
         $filesystem = new Filesystem();
         foreach ($imageUrls as $i => $imageUrl) {
             $localPath = $this->imageDir.$imageUrl;
@@ -192,12 +203,15 @@ class WillhabenScraper
                 //TODO guzzle with proxy?
                 $this->logger->info('Downloading image '.$imageUrl.' ('.($i+1).'/'.count($imageUrls).')');
                 $filesystem->appendToFile($localPath, file_get_contents($remoteUrl));
+                $downloadedSomething = true;
             } else {
                 $this->logger->info('Skipping existing image '.$imageUrl);
             }
         }
 
-        sleep(rand(10, 30));
+        if($downloadedSomething) {
+            sleep(rand(10, 30));
+        }
     }
 
     private function debugLog(int $requestId, string $content, string $header = ''): void

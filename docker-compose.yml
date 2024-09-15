@@ -27,7 +27,7 @@ services:
       target: app_php
     volumes:
       - ./:/srv/app
-    command: 'bin/console messenger:consume scheduler_default async --limit=10'
+    command: 'bin/console messenger:consume scheduler_default async --limit=30'
     environment:
       DATABASE_URL: mysql://root:${MYSQL_PASSWORD:-my-secret-pw}@database:3306/${MYSQL_DB:-app}?serverVersion=8.0
       PROXIES: ${PROXIES:-''}
