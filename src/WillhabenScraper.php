@@ -203,9 +203,8 @@ class WillhabenScraper
     public function fetchImage(Listing $listing)
     {
         $this->logger->info('Started fetching listing images', ['listingId' => $listing->getId()]);
-        $imageUrls = $listing->getListingData()->first()->getAttribute('ALL_IMAGE_URLS');
 
-        $imageUrls = explode(';', $imageUrls);
+        $imageUrls = $listing->getCurrentListingData()->getImages();
         $imageBaseUrl = 'https://cache.willhaben.at/mmo/';
 
         $downloadedSomething = false;
@@ -232,8 +231,7 @@ class WillhabenScraper
 
     private function hasMissingImages(Listing $listing): bool
     {
-        $imageUrls = $listing->getListingData()->first()->getAttribute('ALL_IMAGE_URLS');
-        $imageUrls = explode(';', $imageUrls);
+        $imageUrls = $listing->getCurrentListingData()->getImages();
 
         $filesystem = new Filesystem();
         foreach ($imageUrls as $imageUrl) {
