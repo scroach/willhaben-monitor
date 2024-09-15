@@ -78,7 +78,7 @@ class WillhabenScraper
                 touch('proxies_stats.txt');
                 chmod('proxies_stats.txt', 0777);
             }
-            $proxyStats = json_decode(file_get_contents('proxies_stats.txt'));
+            $proxyStats = json_decode(file_get_contents('proxies_stats.txt'), true);
             $proxyStats = $proxyStats ?: [];
             $proxyStats[$proxy] ??= ['good' => 0, 'bad' => 0];
             $proxyStats[$proxy][$isGood ? 'good' : 'bad']++;
