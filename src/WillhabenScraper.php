@@ -101,8 +101,9 @@ class WillhabenScraper
             $this->entityManager->flush();
 
             foreach ($listings as $listing) {
-                //TODO check first if actually has new images
-                $this->bus->dispatch(new DownloadImagesMessage($listing->getId()));
+                if ($this->hasMissingImages($listing)) {
+                    $this->bus->dispatch(new DownloadImagesMessage($listing->getId()));
+                }
             }
 
             $maxPage = $listingsResult->getMaxPage();
@@ -212,6 +213,22 @@ class WillhabenScraper
         if($downloadedSomething) {
             sleep(rand(10, 30));
         }
+    }
+
+    private function hasMissingImages(Listing $listing): bool
+    {
+        $imageUrls = $listing->getListingData()->first()->getAttribute('ALL_IMAGE_URLS');
+        $imageUrls = explode(';', $imageUrls);
+
+        $filesystem = new Filesystem();
+        foreach ($imageUrls as $imageUrl) {
+            $localPath = $this->imageDir.$imageUrl;
+
+            if (!$filesystem->exists($localPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function debugLog(int $requestId, string $content, string $header = ''): void
