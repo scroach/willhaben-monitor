@@ -154,7 +154,7 @@ class Listing
     public function getCurrentListingData(): ?ListingData
     {
         $data = $this->listingData->toArray();
-        usort($data, fn ($a, $b) => $a <=> $b);
+        usort($data, fn (ListingData $a, ListingData $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
 
         return end($data) ?: null;
     }
