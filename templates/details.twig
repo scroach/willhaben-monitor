@@ -5,7 +5,6 @@
 	<a class="btn btn-outline-secondary" href="{{ path('dashboard') }}">Zurück</a>
 
 	<h1>{{ listing.title }}</h1>
-	{{ listing.priceCurrent }}
 
 	<span class="badge bg-danger">{{ listing.priceMax|format_number }} € max</span>
 	<span class="badge bg-success">{{ listing.priceMin|format_number }} € min</span>
@@ -22,7 +21,7 @@
 	</a>
 
 
-	<h1>Fotos</h1>
+	<h1>Fotos <a href="{{ path('fetch-images', {id: listing.id}) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-refresh"></i></a></h1>
 	<div>
 		{% for image in listing.currentListingData.images %}
 			<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px" loading="lazy" />

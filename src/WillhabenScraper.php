@@ -94,8 +94,12 @@ class WillhabenScraper
         $currentPage = 1;
 
         do {
+            $this->entityManager->clear();
             $listings = [];
             $listingsResult = $this->doSearchRequest($currentPage);
+            $count = count($listingsResult->getListings());
+            echo "got search response, found $count listings\r\n";
+
             foreach ($listingsResult->getListings() as $listing) {
                 $existing = $this->entityManager->getRepository(Listing::class)->findOneBy(['willhabenId' => $listing->getWillhabenId()]);
                 if ($existing) {
