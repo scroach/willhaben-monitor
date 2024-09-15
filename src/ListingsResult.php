@@ -44,8 +44,11 @@ class ListingsResult
 
     public function getMaxPage(): int
     {
-        //TODO check division by zero
-        return ceil($this->getSearchResult()['rowsFound'] / $this->getSearchResult()['rowsReturned']);
+        if ($this->getSearchResult()['rowsReturned']) {
+            return ceil($this->getSearchResult()['rowsFound'] / $this->getSearchResult()['rowsReturned']);
+        } else {
+            return 0;
+        }
     }
 
     private function getSearchResult(): mixed
