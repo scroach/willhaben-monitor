@@ -68,12 +68,22 @@ class WillhabenScraper
     {
         unset($this->proxies[array_search($proxy, $this->proxies, true)]);
         echo "\n\nbanned proxy, got ".count($this->proxies)." left\n\n";
+        $this->logProxy($proxy, false);
+    }
 
+    private function logProxy(string $proxy, bool $isGood): void
+    {
         try {
-            $badProxies = unserialize(file_get_contents('bad_proxies.txt'));
-            $badProxies = $badProxies ?: [];
-            $badProxies[$proxy]++;
-            file_put_contents('bad_proxies.txt', serialize($badProxies));
+            if(!file_exists('proxies_stats.txt')) {
+                touch('proxies_stats.txt');
+                chmod('proxies_stats.txt', 0777);
+            }
+            $proxyStats = json_decode(file_get_contents('proxies_stats.txt'));
+            $proxyStats = $proxyStats ?: [];
+            $proxyStats[$proxy] ??= ['good' => 0, 'bad' => 0];
+            $proxyStats[$proxy][$isGood ? 'good' : 'bad']++;
+
+            file_put_contents('proxies_stats.txt', json_encode($proxyStats, JSON_PRETTY_PRINT));
         } catch (\Throwable $e) {
             $this->logger->error($e->getMessage());
         }
@@ -147,6 +157,7 @@ class WillhabenScraper
                     ]);
 
                     $this->debugLog($requestId, (string)$response->getBody(), 'Response Success');
+                    $this->logProxy($randomProxy, true);
 
                     $result = (string)$response->getBody();
                     $result = explode('<script id="__NEXT_DATA__" type="application/json">', $result)[1];
