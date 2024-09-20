@@ -175,10 +175,10 @@ class WillhabenScraper
                     $proxyRetry++;
                     sleep(10);
                 } catch (RequestException $exception) {
-                    $failedBody = (string) $exception->getResponse()->getBody();
+                    $failedBody = (string) $exception->getResponse()?->getBody();
                     $this->debugLog($requestId, $exception->getMessage(), 'Request failed');
                     $this->debugLog($requestId, $failedBody, 'Response Body');
-                    $this->debugLog($requestId, json_encode($exception->getResponse()->getHeaders(), JSON_PRETTY_PRINT), 'Response Body');
+                    $this->debugLog($requestId, json_encode($exception->getResponse()?->getHeaders() ?? [], JSON_PRETTY_PRINT), 'Response Body');
 
                     if (str_contains($failedBody, 'IP address is blocked') || str_contains($failedBody, 'IP-Adresse wurde blockiert')) {
                         echo "IP / proxy is blocked by willhaben, no need to retry...\r\n";
