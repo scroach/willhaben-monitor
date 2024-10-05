@@ -261,4 +261,13 @@ class Listing
         $this->setTitle($this->getCurrentListingData()?->getTitle() ?? $this->getTitle());
     }
 
+    public function getSaleReduction(): float
+    {
+        if($this->getPriceCurrent() > 1000 && $this->getPriceMax() > 1000) {
+            return 100 - ($this->getPriceCurrent() / $this->getPriceMax() * 100);
+        } else {
+            return 0;
+        }
+    }
+
 }

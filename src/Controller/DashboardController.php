@@ -34,12 +34,11 @@ class DashboardController extends AbstractController
             }
         }
 
-
-        $showAll = false;
+        $showAll = $request->query->getBoolean('showAll');
+        $sortBySale = $request->query->getBoolean('sortBySale');
         $from = (new \DateTime())->modify('-1 month');
         $to = (new \DateTime());
-        if ($request->query->has('showAll')) {
-            $showAll = true;
+        if ($showAll) {
             $listings = $em->getRepository(Listing::class)->findBy([], ['lastSeen' => 'DESC']);
         } else {
             $listings = $em->getRepository(Listing::class)->createQueryBuilder('l')
@@ -48,11 +47,16 @@ class DashboardController extends AbstractController
                 ->getQuery()->getResult();
         }
 
+        if ($sortBySale) {
+            usort($listings, fn (Listing $a, Listing $b) => $b->getSaleReduction() <=> $a->getSaleReduction());
+        }
+
         return $this->render('dashboard.twig', [
             'listings' => $listings,
             'from' => $from,
             'to' => $to,
             'showAll' => $showAll,
+            'sortBySale' => $sortBySale,
             'form' => $form->createView(),
         ]);
     }

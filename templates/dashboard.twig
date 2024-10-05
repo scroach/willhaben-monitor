@@ -23,12 +23,28 @@
 		<a href="{{ path('dashboard', {showAll: true}) }}" class="small">show all</a>
 	{% endif %}
 
+	<ul class="nav nav-tabs" id="myTab" role="tablist">
+		<li class="nav-item">
+			<a class="nav-link {{ not showAll and not sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: false, sortBySale: false}) }}">Letztes Monat by Datum</a>
+		</li>
+		<li class="nav-item active">
+			<a class="nav-link {{ not showAll and sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: false, sortBySale: true}) }}">Letztes Monat By Sale</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link {{ showAll and  not sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: true, sortBySale: false}) }}">Alle by Datum</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link {{ showAll and sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: true, sortBySale: true}) }}">Alle By Sale</a>
+		</li>
+	</ul>
+
 	<table class="table table">
 		<thead>
 		<tr>
 			<th>Title</th>
 			<th>m²</th>
 			<th>€ current</th>
+			<th>% Sale</th>
 			<th>€/m² current</th>
 			<th>€ Max</th>
 			<th>€ Min</th>
@@ -49,6 +65,16 @@
 			</td>
 			<td>{{ listing.area is null ? '?' : listing.area|format_number }}</td>
 			<td>{{ listing.priceCurrent is null ? '?' : listing.priceCurrent|format_number }}</td>
+			<td>
+				{% set diff = listing.getSaleReduction %}
+				{% if listing.priceCurrent < listing.priceMax %}
+					<span class="badge bg-success">-{{ diff|format_number({fraction_digit:0}) }}%</span>
+				{% elseif listing.priceCurrent > listing.priceMax %}
+					<span class="badge bg-danger">+{{ diff|format_number({fraction_digit:0}) }}%</span>
+				{% else %}
+					<span class="badge bg-secondary">{{ diff|format_number({fraction_digit:0}) }}%</span>
+				{% endif %}
+			</td>
 			<td>{{ listing.priceCurrentPerSqm is null ? '?' : listing.priceCurrentPerSqm|format_number }}</td>
 			<td>{{ listing.priceMax is null ? '?' : listing.priceMax|format_number }}</td>
 			<td>{{ listing.priceMin is null ? '?' : listing.priceMin|format_number }}</td>
