@@ -270,4 +270,9 @@ class Listing
         }
     }
 
+    public function getAgeInWeeks(): ?int
+    {
+        return $this->firstSeen?->diff($this->lastSeen)->days/7;
+    }
+
 }

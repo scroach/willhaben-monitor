@@ -53,6 +53,7 @@
 			<th>€/m² min</th>
 			<th>First seen</th>
 			<th>Last seen</th>
+			<th>Age</th>
 			<th>Pics</th>
 		</tr>
 		</thead>
@@ -83,6 +84,7 @@
 			<td>{{ listing.area ? (listing.priceMin/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
 			<td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
 			<td>{{ listing.lastSeen|date('d.m.Y H:i:s') }}</td>
+			<td>{{ listing.ageInWeeks }} Wochen</td>
 			<td>
 				<img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px" loading="lazy" />
 			</td>
