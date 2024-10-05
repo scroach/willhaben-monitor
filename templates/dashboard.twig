@@ -39,6 +39,10 @@
 		</li>
 	</ul>
 
+	{{ render(controller(
+		'App\\Controller\\ListingsController::scatterChartStats', {}
+	)) }}
+
 	<table class="table table">
 		<thead>
 		<tr>

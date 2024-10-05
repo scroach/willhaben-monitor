@@ -72,4 +72,32 @@ class ListingsController extends AbstractController
         return $this->render('_scatter_chart.twig', ['scatterData' => $data, 'listing' => $listing]);
     }
 
+    #[Route('/listings/scatter-chart-stats', name: 'scatter-chart-stats')]
+    public function scatterChartStats(EntityManagerInterface $em): Response
+    {
+        $result = $em->getRepository(Listing::class)->createQueryBuilder('l')
+            ->select('l.priceCurrent, l.area, l.firstSeen, l.lastSeen, l.id')
+            ->andWhere('l.priceCurrent IS NOT NULL')
+            ->andWhere('l.priceCurrent BETWEEN 1000 AND 1000000')
+            ->andWhere('l.area IS NOT NULL')
+            ->andWhere('l.area BETWEEN 90 AND 500')
+            ->andWhere('l.lastSeen IS NOT NULL')
+            ->getQuery()->getResult();
+
+        $data = ['fresh' => [], 'sold' => []];
+        foreach ($result as $row) {
+            $pricePerSqm = $row['priceCurrent'] / $row['area'];
+            $ageInWeeks = $row['firstSeen']->diff($row['lastSeen'])->days / 7;
+
+            $single = ['pricePerSqm' => $pricePerSqm, 'ageInWeeks' => $ageInWeeks, 'id' => $row['id']];
+            if ($row['lastSeen'] > (new \DateTime())->modify('-7days')) {
+                $data['fresh'][] = $single;
+            } else {
+                $data['sold'][] = $single;
+            }
+        }
+
+        return $this->render('_scatter_chart_stats.twig', ['scatterData' => $data]);
+    }
+
 }

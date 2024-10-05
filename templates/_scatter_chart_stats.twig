@@ -1,0 +1,91 @@
+{% set id = random(1,10000) %}
+
+<div style="height: 400px">
+    <canvas id="scatter-chart-js-{{ id }}"></canvas>
+</div>
+
+<script>
+    (function () {
+		const ctx = document.getElementById('scatter-chart-js-{{ id }}');
+
+		const data = {
+			datasets: [
+				{% for key, series in scatterData %}
+				{
+					label: '{{ key }}',
+					data: [
+						{% for data in series %}
+						{
+							x: {{ data.ageInWeeks }},
+							y: {{ data.pricePerSqm }},
+							customData: {id: {{ data.id }} }
+						},
+						{% endfor %}
+					],
+				},
+				{% endfor %}
+			],
+		};
+
+		const config = {
+			type: 'scatter',
+			data: data,
+			options: {
+				maintainAspectRatio: false,
+				scales: {
+					x: {
+						title: {
+							display: true,
+							text: 'Alter in Wochen'
+						},
+						type: 'linear',
+						position: 'bottom',
+					},
+					y: {
+						title: {
+							display: true,
+							text: 'Preis pro Quadratmeter €/m²'
+						},
+						min: 0,
+					}
+				},
+				plugins: {
+					legend: {position: 'bottom'},
+					zoom: {
+						zoom: {
+							wheel: {
+								enabled: true,
+							},
+							pinch: {
+								enabled: true
+							},
+							mode: 'xy',
+							limits: {
+								y: {min: 0, max: 1000000},
+							},
+						}
+					},
+					title: {
+						display: true,
+						text: 'Verkauft / Fresh nach alter und Preis'
+					}
+				}
+			}
+		};
+
+		let myChart = new Chart(ctx, config);
+
+		ctx.onclick = openListing;
+
+		function openListing(evt) {
+			const points = myChart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, true);
+
+			if (points.length) {
+				const firstPoint = points[0];
+				const value = myChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+
+				window.open('{{ url('details', {id: 'xxx'}) }}'.replace('xxx', value.customData.id), '_blank').focus();
+			}
+		}
+    })();
+</script>
