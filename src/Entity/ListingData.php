@@ -118,7 +118,7 @@ class ListingData
 
     public function getImages(): array
     {
-        return explode(';', $this->getAttribute('ALL_IMAGE_URLS'));
+        return $this->getAttribute('ALL_IMAGE_URLS') !== null ? explode(';', $this->getAttribute('ALL_IMAGE_URLS')) : [];
     }
 
     public function getLivingSize(): ?float

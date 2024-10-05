@@ -257,7 +257,7 @@ class Listing
 
         $this->setCity($this->getCurrentListingData()->getCity());
         $this->setZip($this->getCurrentListingData()->getZip());
-        $this->setTitleImage($this->getCurrentListingData()?->getImages()[0]);
+        $this->setTitleImage($this->getCurrentListingData()?->getImages()[0] ?? null);
         $this->setTitle($this->getCurrentListingData()?->getTitle() ?? $this->getTitle());
     }
 
