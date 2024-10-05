@@ -20,16 +20,27 @@
 		Willhaben öffnen
 	</a>
 
-
-	<h1>Fotos <a href="{{ path('fetch-images', {id: listing.id}) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-refresh"></i></a></h1>
-	<div>
-		{% for image in listing.currentListingData.images %}
-			<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px" loading="lazy" />
-		{% endfor %}
+	<div class="row">
+		<div class="col">
+			<h1>Fotos <a href="{{ path('fetch-images', {id: listing.id}) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-refresh"></i></a></h1>
+			<div>
+				{% for image in listing.currentListingData.images %}
+					<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px" loading="lazy" />
+				{% endfor %}
+			</div>
+		</div>
+		<div class="col-xs-12 col-sm-6 col-lg-3">
+			<canvas id="price-chart-js"></canvas>
+		</div>
 	</div>
 
-	<h1>Preisverlauf</h1>
-	<div id="price-chart"></div>
+	<div class="row">
+		<div class="col">
+			<div style="height: 400px">
+				<canvas id="scatter-chart-js"></canvas>
+			</div>
+		</div>
+	</div>
 
 
 	<h1>Historische Daten</h1>
@@ -79,82 +90,162 @@
 	{% set firstSeen = listing.firstSeen.timestamp %}
 	{% set lastSeen = listing.lastSeen.timestamp %}
 
-	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-	<script>
-		const bsTab = new bootstrap.Tab('#mytabs');
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
+	<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
-		let options = {
-			series: [
-				{
-					name: "Preise",
-					data: [
-						{% for data in listing.listingData %}
-							[{{ data.createdAt.timestamp * 1000 }}, {{ data.price }}],
-						{% endfor %}
-					]
-				},
-			],
-			chart: {
-				height: 350,
+
+
+	<script>
+		(function () {
+
+			const ctx = document.getElementById('price-chart-js');
+
+			const data = {
+						datasets: [{
+							data: [
+								{% for data in listing.listingData %}
+								{
+									x: {{ data.createdAt.timestamp * 1000 }},
+									y: {{ data.price }}
+								},
+								{% endfor %}
+							]
+						}],
+					}
+			;
+
+			const config = {
 				type: 'line',
-				dropShadow: {
-					enabled: true,
-					color: '#000',
-					top: 18,
-					left: 7,
-					blur: 10,
-					opacity: 0.2
+				data: data,
+				options: {
+					maintainAspectRatio: false,
+					scales: {
+						x: {
+							type: 'time',
+							title: {
+								display: true,
+								text: 'Date'
+							}
+						},
+						y: {
+							title: {
+								display: true,
+								text: 'Preis €'
+							}
+						}
+					},
+					plugins: {
+						legend: {display: false},
+						title: {
+							display: true,
+							text: 'Preisverlauf'
+						}
+					}
 				},
-				zoom: {
-					enabled: false
+			};
+
+			let myChart = new Chart(ctx, config);
+		})();
+	</script>
+
+
+	<script>
+		const ctx = document.getElementById('scatter-chart-js');
+
+		const data = {
+			datasets: [
+				{
+					label: '{{ listing.title|slice(0,15)~'...' }}',
+					data: [
+						{
+							x: {{ listing.area }},
+							y: {{ listing.priceCurrent }},
+						},
+					],
+					borderWidth: 1,
+					pointStyle: 'rectRot',
+					pointRadius: 10,
 				},
-				toolbar: {
-					show: false
+				{% for key, series in scatterData %}
+				{
+					label: '{{ key }}',
+					data: [
+						{% for data in series %}
+						{
+							x: {{ data.area }},
+							y: {{ data.price }},
+							customData: {id: {{ data.id }} }
+						},
+						{% endfor %}
+					],
+				},
+				{% endfor %}
+			],
+		};
+
+		const config = {
+			type: 'scatter',
+			data: data,
+			options: {
+				maintainAspectRatio: false,
+				scales: {
+					x: {
+						title: 'Fläche m²',
+						type: 'linear',
+						position: 'bottom',
+						min: 90,
+					},
+					y: {
+						title: 'Preis €',
+						min: 0,
+					}
+				},
+				plugins: {
+					legend: {position:'bottom'},
+					zoom: {
+						zoom: {
+							wheel: {
+								enabled: true,
+							},
+							pinch: {
+								enabled: true
+							},
+							mode: 'xy',
+							limits: {
+								y: {min: 0, max: 1000000},
+							},
+						}
+					},
+					title: {
+						display: true,
+						text: 'Scatter Positionierung'
+					}
 				}
-			},
-			tooltip: {
-				x: {
-					format: 'dd MMMM yyyy'
-				}
-			},
-			colors: ['#77B6EA', '#545454'],
-			stroke: {
-				curve: 'smooth'
-			},
-			grid: {
-				borderColor: '#e7e7e7',
-				row: {
-					colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-					opacity: 0.5
-				},
-			},
-			markers: {
-				size: 1
-			},
-			xaxis: {
-				title: {
-					text: 'Datum'
-				},
-				type: 'datetime',
-				min: {{ (firstSeen - (60*60*24*30))*1000 }},
-				max: {{ (lastSeen + (60*60*24*30))*1000 }},
-				tickAmount: 6,
-			},
-			yaxis: {
-				title: {
-					text: 'Preis'
-				},
-			},
-			legend: {
-				position: 'top',
-				horizontalAlign: 'right',
-				floating: true,
-				offsetY: -25,
-				offsetX: -5
 			}
 		};
 
-		(new ApexCharts(document.querySelector("#price-chart"), options)).render();
+		let myChart = new Chart(ctx, config);
+		// override only the first dataset colors https://stackoverflow.com/a/28431142/2424814
+		myChart.data.datasets[0].backgroundColor = "rgba(255,0,0,0.79)";
+		myChart.data.datasets[0].borderColor = "rgba(0,0,0,1)";
+		myChart.update();
+
+		ctx.onclick = openListing;
+
+		function openListing(evt) {
+			const points = myChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+
+			if (points.length) {
+				const firstPoint = points[0];
+				const value = myChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+
+				window.open('{{ url('details', {id: 'xxx'}) }}'.replace('xxx', value.customData.id), '_blank').focus();
+			}
+		}
+
 	</script>
 
 {% endblock %}
