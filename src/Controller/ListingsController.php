@@ -26,27 +26,11 @@ class ListingsController extends AbstractController
     #[Route('/listings/{id}', name: 'details')]
     public function details(Listing $listing, EntityManagerInterface $em, LoggerInterface $logger): Response
     {
-        $result = $em->getRepository(Listing::class)->createQueryBuilder('l')
-            ->select('l.priceCurrent, l.area, l.zip, l.id')
-            ->andWhere('l.priceCurrent IS NOT NULL')
-            ->andWhere('l.priceCurrent BETWEEN 1000 AND 1000000')
-            ->andWhere('l.area IS NOT NULL')
-            ->andWhere('l.area BETWEEN 90 AND 500')
-            ->andWhere('l.lastSeen IS NOT NULL')
-            ->addOrderBy('l.zip', 'ASC')
-            ->getQuery()->getResult();
-
-        $data = [];
-        foreach ($result as $row) {
-            $zip = substr($row['zip'], 0, 2).'xx';
-            $data[$zip][] = ['price' => $row['priceCurrent'], 'area' => $row['area'], 'id' => $row['id']];
-        }
-
         $listing->updateAggregatedData();
         $em->flush();
 
 
-        return $this->render('details.twig', ['listing' => $listing, 'scatterData' => $data]);
+        return $this->render('details.twig', ['listing' => $listing]);
     }
 
     #[Route('/listings/{id}/fetch-images', name: 'fetch-images')]
@@ -56,6 +40,36 @@ class ListingsController extends AbstractController
         $this->addFlash('info', 'fetching of images triggered');
 
         return $this->redirectToRoute('details', ['id' => $listing->getId()]);
+    }
+
+    #[Route('/listings/scatter-chart', name: 'scatter-chart')]
+    public function scatterChart(EntityManagerInterface $em, ?int $maxMonths = null, ?Listing $listing = null): Response
+    {
+        $queryBuilder = $em->getRepository(Listing::class)->createQueryBuilder('l')
+            ->select('l.priceCurrent, l.area, l.zip, l.id')
+            ->andWhere('l.priceCurrent IS NOT NULL')
+            ->andWhere('l.priceCurrent BETWEEN 1000 AND 1000000')
+            ->andWhere('l.area IS NOT NULL')
+            ->andWhere('l.area BETWEEN 90 AND 500')
+            ->andWhere('l.lastSeen IS NOT NULL')
+            ->addOrderBy('l.zip', 'ASC');
+
+        if ($maxMonths) {
+            $queryBuilder
+                ->andWhere('l.lastSeen >= :minDate')
+                ->setParameter('minDate', (new \DateTime())->modify("-$maxMonths months"));
+        }
+
+        $result = $queryBuilder
+            ->getQuery()->getResult();
+
+        $data = [];
+        foreach ($result as $row) {
+            $zip = substr($row['zip'], 0, 2).'xx';
+            $data[$zip][] = ['price' => $row['priceCurrent'], 'area' => $row['area'], 'id' => $row['id']];
+        }
+
+        return $this->render('_scatter_chart.twig', ['scatterData' => $data, 'listing' => $listing]);
     }
 
 }

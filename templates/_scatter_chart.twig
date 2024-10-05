@@ -1,0 +1,108 @@
+{% set id = random(1,10000) %}
+
+<div style="height: 400px">
+    <canvas id="scatter-chart-js-{{ id }}"></canvas>
+</div>
+
+<script>
+    (function () {
+		const ctx = document.getElementById('scatter-chart-js-{{ id }}');
+
+		const data = {
+			datasets: [
+				{% if listing %}
+				{
+					label: '{{ listing.title|slice(0,15)~'...' }}',
+					data: [
+						{
+							x: {{ listing.area }},
+							y: {{ listing.priceCurrent }},
+						},
+					],
+					borderWidth: 1,
+					pointStyle: 'rectRot',
+					pointRadius: 10,
+				},
+				{% endif %}
+
+				{% for key, series in scatterData %}
+				{
+					label: '{{ key }}',
+					data: [
+						{% for data in series %}
+						{
+							x: {{ data.area }},
+							y: {{ data.price }},
+							customData: {id: {{ data.id }} }
+						},
+						{% endfor %}
+					],
+				},
+				{% endfor %}
+			],
+		};
+
+		const config = {
+			type: 'scatter',
+			data: data,
+			options: {
+				maintainAspectRatio: false,
+				scales: {
+					x: {
+						title: 'Fläche m²',
+						type: 'linear',
+						position: 'bottom',
+						min: 90,
+					},
+					y: {
+						title: 'Preis €',
+						min: 0,
+					}
+				},
+				plugins: {
+					legend: {position: 'bottom'},
+					zoom: {
+						zoom: {
+							wheel: {
+								enabled: true,
+							},
+							pinch: {
+								enabled: true
+							},
+							mode: 'xy',
+							limits: {
+								y: {min: 0, max: 1000000},
+							},
+						}
+					},
+					title: {
+						display: true,
+						text: 'Scatter Positionierung'
+					}
+				}
+			}
+		};
+
+		let myChart = new Chart(ctx, config);
+
+		{% if listing %}
+			// override only the first dataset colors https://stackoverflow.com/a/28431142/2424814
+			myChart.data.datasets[0].backgroundColor = "rgba(255,0,0,0.79)";
+			myChart.data.datasets[0].borderColor = "rgba(0,0,0,1)";
+			myChart.update();
+		{% endif %}
+
+		ctx.onclick = openListing;
+
+		function openListing(evt) {
+			const points = myChart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, true);
+
+			if (points.length) {
+				const firstPoint = points[0];
+				const value = myChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+
+				window.open('{{ url('details', {id: 'xxx'}) }}'.replace('xxx', value.customData.id), '_blank').focus();
+			}
+		}
+    })();
+</script>

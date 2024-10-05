@@ -30,17 +30,45 @@
 			</div>
 		</div>
 		<div class="col-xs-12 col-sm-6 col-lg-3">
+
 			<canvas id="price-chart-js"></canvas>
 		</div>
 	</div>
 
-	<div class="row">
-		<div class="col">
-			<div style="height: 400px">
-				<canvas id="scatter-chart-js"></canvas>
+	<h1>Preispositionierung</h1>
+	<div class="card">
+		<div class="card-body">
+			<ul class="nav nav-tabs" id="myTab" role="tablist">
+				<li class="nav-item" role="presentation">
+					<button class="nav-link active" data-bs-toggle="tab" data-bs-target="#chartOneMonth" type="button">Letztes Monat</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" data-bs-toggle="tab" data-bs-target="#chartSixMonth" type="button">Letzte 6 Monate</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" data-bs-toggle="tab" data-bs-target="#chartAll" type="button">Alle</button>
+				</li>
+			</ul>
+			<div class="tab-content" id="myTabContent" style="height: 400px">
+				<div class="tab-pane show active" id="chartOneMonth">
+					{{ render(controller(
+						'App\\Controller\\ListingsController::scatterChart', {listing: listing, maxMonths: 1}
+					)) }}
+				</div>
+				<div class="tab-pane" id="chartSixMonth">
+					{{ render(controller(
+						'App\\Controller\\ListingsController::scatterChart', {listing: listing, maxMonths: 6}
+					)) }}
+				</div>
+				<div class="tab-pane " id="chartAll">
+					{{ render(controller(
+						'App\\Controller\\ListingsController::scatterChart', {listing: listing}
+					)) }}
+				</div>
 			</div>
 		</div>
 	</div>
+
 
 
 	<h1>Historische Daten</h1>
@@ -89,13 +117,6 @@
 
 	{% set firstSeen = listing.firstSeen.timestamp %}
 	{% set lastSeen = listing.lastSeen.timestamp %}
-
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
-	<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
 
 
 	<script>
@@ -152,100 +173,5 @@
 	</script>
 
 
-	<script>
-		const ctx = document.getElementById('scatter-chart-js');
-
-		const data = {
-			datasets: [
-				{
-					label: '{{ listing.title|slice(0,15)~'...' }}',
-					data: [
-						{
-							x: {{ listing.area }},
-							y: {{ listing.priceCurrent }},
-						},
-					],
-					borderWidth: 1,
-					pointStyle: 'rectRot',
-					pointRadius: 10,
-				},
-				{% for key, series in scatterData %}
-				{
-					label: '{{ key }}',
-					data: [
-						{% for data in series %}
-						{
-							x: {{ data.area }},
-							y: {{ data.price }},
-							customData: {id: {{ data.id }} }
-						},
-						{% endfor %}
-					],
-				},
-				{% endfor %}
-			],
-		};
-
-		const config = {
-			type: 'scatter',
-			data: data,
-			options: {
-				maintainAspectRatio: false,
-				scales: {
-					x: {
-						title: 'Fläche m²',
-						type: 'linear',
-						position: 'bottom',
-						min: 90,
-					},
-					y: {
-						title: 'Preis €',
-						min: 0,
-					}
-				},
-				plugins: {
-					legend: {position:'bottom'},
-					zoom: {
-						zoom: {
-							wheel: {
-								enabled: true,
-							},
-							pinch: {
-								enabled: true
-							},
-							mode: 'xy',
-							limits: {
-								y: {min: 0, max: 1000000},
-							},
-						}
-					},
-					title: {
-						display: true,
-						text: 'Scatter Positionierung'
-					}
-				}
-			}
-		};
-
-		let myChart = new Chart(ctx, config);
-		// override only the first dataset colors https://stackoverflow.com/a/28431142/2424814
-		myChart.data.datasets[0].backgroundColor = "rgba(255,0,0,0.79)";
-		myChart.data.datasets[0].borderColor = "rgba(0,0,0,1)";
-		myChart.update();
-
-		ctx.onclick = openListing;
-
-		function openListing(evt) {
-			const points = myChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-
-			if (points.length) {
-				const firstPoint = points[0];
-				const value = myChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
-
-				window.open('{{ url('details', {id: 'xxx'}) }}'.replace('xxx', value.customData.id), '_blank').focus();
-			}
-		}
-
-	</script>
 
 {% endblock %}
