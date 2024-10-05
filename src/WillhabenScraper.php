@@ -109,6 +109,7 @@ class WillhabenScraper
                     $listing = $existing;
                 }
 
+                $listing->updateAggregatedData();
                 $listings[] = $listing;
                 $this->entityManager->persist($listing);
             }
