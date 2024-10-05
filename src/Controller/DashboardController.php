@@ -36,10 +36,19 @@ class DashboardController extends AbstractController
 
         $showAll = $request->query->getBoolean('showAll');
         $sortBySale = $request->query->getBoolean('sortBySale');
+        $showFresh = $request->query->getBoolean('showFresh');
+        $sortByFirstSeen = $request->query->getBoolean('sortByFirstSeen');
+
         $from = (new \DateTime())->modify('-1 month');
         $to = (new \DateTime());
         if ($showAll) {
             $listings = $em->getRepository(Listing::class)->findBy([], ['lastSeen' => 'DESC']);
+        } else if ($showFresh) {
+            $listings = $em->getRepository(Listing::class)
+                ->createQueryBuilder('l')
+                ->andWhere('l.lastSeen > :fresh')->setParameter(':fresh', (new \DateTime())->modify('-7days'))
+                ->orderBy('l.firstSeen', 'ASC')
+                ->getQuery()->getResult();
         } else {
             $listings = $em->getRepository(Listing::class)->createQueryBuilder('l')
                 ->andWhere('l.lastSeen >= :lastSeen')->setParameter('lastSeen', $from)
@@ -56,6 +65,8 @@ class DashboardController extends AbstractController
             'from' => $from,
             'to' => $to,
             'showAll' => $showAll,
+            'showFresh' => $showFresh,
+            'sortByFirstSeen' => $sortByFirstSeen,
             'sortBySale' => $sortBySale,
             'form' => $form->createView(),
         ]);
