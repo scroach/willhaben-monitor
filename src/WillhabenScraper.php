@@ -41,7 +41,7 @@ class WillhabenScraper
     private function fetchRandomProxy(): string
     {
         if (!$this->proxies) {
-            echo "\n\nno proxies left... fetching new ones...\n\n";
+            $this->logger->notice("no proxies left... fetching new ones...");
             $this->proxies = $this->fetchProxies();
         }
 
@@ -59,7 +59,7 @@ class WillhabenScraper
 
         preg_match_all('/([\d.:]+) \w{2}-[AH]!?/', $contents, $matches);
 
-        echo "got ".count($matches[1])." proxies\r\n";
+        $this->logger->notice("got ".count($matches[1])." proxies");
 
         return $matches[1];
     }
@@ -67,7 +67,7 @@ class WillhabenScraper
     private function blacklistProxy(string $proxy): void
     {
         unset($this->proxies[array_search($proxy, $this->proxies, true)]);
-        echo "\n\nbanned proxy, got ".count($this->proxies)." left\n\n";
+        $this->logger->info("banned proxy, got ".count($this->proxies)." left");
         $this->logProxy($proxy, false);
     }
 
@@ -98,20 +98,19 @@ class WillhabenScraper
             $listings = [];
             $listingsResult = $this->doSearchRequest($currentPage);
             $count = count($listingsResult->getListings());
-            echo "got search response, found $count listings on page {$listingsResult->getCurrentPage()} of {$listingsResult->getMaxPage()}\r\n";
+
+            $this->logger->info("got search response, found $count listings on page {$listingsResult->getCurrentPage()} of {$listingsResult->getMaxPage()}");
 
             foreach ($listingsResult->getListings() as $listing) {
                 $existing = $this->entityManager->getRepository(Listing::class)->findOneBy(['willhabenId' => $listing->getWillhabenId()]);
                 if ($existing) {
-                    //TODO process update, add more metadata directly
                     $existing->addListingData($listing->getListingData()->first());
                     $existing->setLastSeen(new \DateTimeImmutable());
-                    $listing = $existing;
+                    $listings[] = $existing;
+                } else {
+                    $listings[] = $listing;
+                    $this->entityManager->persist($listing);
                 }
-
-                $listing->updateAggregatedData();
-                $listings[] = $listing;
-                $this->entityManager->persist($listing);
             }
             $this->entityManager->flush();
 
@@ -140,7 +139,7 @@ class WillhabenScraper
         do {
             $proxyRetry = 0;
             $randomProxy = $this->fetchRandomProxy();
-            echo "using proxy: $randomProxy\r\n";
+            $this->logger->info("using proxy: $randomProxy");
             do {
                 try {
                     // https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote?0%5BareaId%5D=6&1%5BNO_OF_ROOMS_BUCKET%5D=4X4&2%5BNO_OF_ROOMS_BUCKET%5D=5X5&3%5BNO_OF_ROOMS_BUCKET%5D=6X9&4%5BESTATE_SIZE%2FLIVING_AREA_FROM%5D=95&5%5Brows%5D=200&6%5Bpage%5D=1
@@ -172,7 +171,7 @@ class WillhabenScraper
                     return ListingsResult::fromJson($result);
                 } catch (ConnectException $exception) {
                     $this->debugLog($requestId, $exception->getMessage(), 'Request failed');
-                    echo "request failed, retrying in 10... ".$exception->getMessage()."\r\n";
+                    $this->logger->error("request failed, retrying in 10... ".$exception->getMessage());
                     $proxyRetry++;
                     sleep(10);
                 } catch (RequestException $exception) {
@@ -182,10 +181,10 @@ class WillhabenScraper
                     $this->debugLog($requestId, json_encode($exception->getResponse()?->getHeaders() ?? [], JSON_PRETTY_PRINT), 'Response Body');
 
                     if (str_contains($failedBody, 'IP address is blocked') || str_contains($failedBody, 'IP-Adresse wurde blockiert')) {
-                        echo "IP / proxy is blocked by willhaben, no need to retry...\r\n";
+                        $this->logger->warning("IP / proxy is blocked by willhaben, no need to retry...");
                         $proxyRetry = self::MAX_RETRIES_PER_PROXY;
                     } else {
-                        echo "request failed, retrying in 10... ".$exception->getMessage()."\r\n";
+                        $this->logger->error("request failed, retrying in 10... ".$exception->getMessage());
                         $proxyRetry++;
                         sleep(10);
                     }
@@ -197,7 +196,7 @@ class WillhabenScraper
             } while ($proxyRetry < self::MAX_RETRIES_PER_PROXY);
 
             $this->blacklistProxy($randomProxy);
-            echo "proxy: $randomProxy is no good :(\r\n";
+            $this->logger->warning("proxy: $randomProxy is no good :(");
         } while ($requestRetry < self::MAX_RETRIES);
     }
 
