@@ -17,10 +17,8 @@
 
 	{% if showAll %}
 		<h2>{{ listings|length }} Listings total</h2>
-		<a href="{{ path('dashboard') }}" class="small">show only last month</a>
 	{% else %}
 		<h2>{{ listings|length }} Listings seen from {{ from|format_date }} to {{ to|format_date }}</h2>
-		<a href="{{ path('dashboard', {showAll: true}) }}" class="small">show all</a>
 	{% endif %}
 
 	<ul class="nav nav-tabs" id="myTab" role="tablist">
