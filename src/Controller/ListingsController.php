@@ -26,7 +26,7 @@ class ListingsController extends AbstractController
     #[Route('/listings/{id}', name: 'details')]
     public function details(Listing $listing, EntityManagerInterface $em, LoggerInterface $logger): Response
     {
-        $listing->updateAggregatedData();
+        $listing->updateAggregatedDataFull();
         $em->flush();
 
 

@@ -85,7 +85,7 @@ class DashboardController extends AbstractController
     public function updateAggregatedData(EntityManagerInterface $em): Response
     {
         $listings = $em->getRepository(Listing::class)->findBy(['city' => null], [], 100);
-        array_walk($listings, fn(Listing $listing) => $listing->updateAggregatedData());
+        array_walk($listings, fn(Listing $listing) => $listing->updateAggregatedDataFull());
         $em->flush();
 
         return $this->json(['count' => count($listings)]);

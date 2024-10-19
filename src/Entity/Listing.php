@@ -130,11 +130,10 @@ class Listing
 
     public function addListingData(ListingData $listingData): self
     {
-        if (!$this->listingData->contains($listingData)) {
-            $this->listingData->add($listingData);
-            $listingData->setListing($this);
-        }
-        $this->updateAggregatedData();
+        // do not fetch listing data collection here because that may be a lot of memory..
+        $listingData->setListing($this);
+
+        $this->updateAggregatedDataDaily($listingData);
 
         return $this;
     }
@@ -239,7 +238,29 @@ class Listing
         $this->priceCurrentPerSqm = $priceCurrentPerSqm;
     }
 
-    public function updateAggregatedData(): void
+    public function updateAggregatedDataDaily(ListingData $newData): void
+    {
+        $priceCurrent = $newData->getPrice();
+        $prices = [$this->getPriceCurrent(), $priceCurrent];
+        // filter zero values
+        $prices = array_filter($prices, fn(float $price) => $price > 10);
+        $this->setPriceMin(count($prices) ? min($prices) : null);
+        $this->setPriceMax(count($prices) ? max($prices) : null);
+        $this->setPriceCurrent($priceCurrent > 10 ? $priceCurrent : null);
+        $this->setArea($newData->getLivingSize());
+
+        $this->setPriceCurrentPerSqm(null);
+        if ($priceCurrent > 10 && $this->getArea() > 10) {
+            $this->setPriceCurrentPerSqm($priceCurrent / $this->getArea());
+        }
+
+        $this->setCity($newData->getCity());
+        $this->setZip($newData->getZip());
+        $this->setTitleImage($newData->getImages()[0] ?? null);
+        $this->setTitle($newData->getTitle() ?? $this->getTitle());
+    }
+
+    public function updateAggregatedDataFull(): void
     {
         $prices = array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray());
         // filter zero values
