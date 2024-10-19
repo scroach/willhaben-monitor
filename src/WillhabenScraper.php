@@ -105,6 +105,7 @@ class WillhabenScraper
 
             foreach ($listingsResult->getListings() as $listing) {
                 $newListingData = $listing->getListingData()->first();
+                $this->entityManager->persist($newListingData);
                 $processedNewData[] = $newListingData;
 
                 $existing = $this->entityManager->getRepository(Listing::class)->findOneBy(['willhabenId' => $listing->getWillhabenId()]);
@@ -129,7 +130,7 @@ class WillhabenScraper
             $currentPage++;
         } while ($currentPage <= $maxPage);
 
-        die('done!');
+        $this->logger->info("done!");
     }
 
     function doSearchRequest(int $currentPage): ListingsResult
