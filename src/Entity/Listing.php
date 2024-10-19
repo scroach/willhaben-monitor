@@ -243,7 +243,7 @@ class Listing
         $priceCurrent = $newData->getPrice();
         $prices = [$this->getPriceCurrent(), $priceCurrent];
         // filter zero values
-        $prices = array_filter($prices, fn(float $price) => $price > 10);
+        $prices = array_filter($prices, fn(?float $price) => $price > 10);
         $this->setPriceMin(count($prices) ? min($prices) : null);
         $this->setPriceMax(count($prices) ? max($prices) : null);
         $this->setPriceCurrent($priceCurrent > 10 ? $priceCurrent : null);
@@ -264,7 +264,7 @@ class Listing
     {
         $prices = array_map(fn(ListingData $l) => $l->getPrice(), $this->getListingData()->toArray());
         // filter zero values
-        $prices = array_filter($prices, fn(float $price) => $price > 10);
+        $prices = array_filter($prices, fn(?float $price) => $price > 10);
         $this->setPriceMin(count($prices) ? min($prices) : null);
         $this->setPriceMax(count($prices) ? max($prices) : null);
         $priceCurrent = $this->getCurrentListingData()?->getPrice();
