@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\Entity\Listing;
+use App\Entity\ListingData;
 use App\Message\DownloadImagesMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use GuzzleHttp\Client;
@@ -96,15 +97,19 @@ class WillhabenScraper
         do {
             $this->entityManager->clear();
             $listings = [];
+            $processedNewData = [];
             $listingsResult = $this->doSearchRequest($currentPage);
             $count = count($listingsResult->getListings());
 
             $this->logger->info("got search response, found $count listings on page {$listingsResult->getCurrentPage()} of {$listingsResult->getMaxPage()}");
 
             foreach ($listingsResult->getListings() as $listing) {
+                $newListingData = $listing->getListingData()->first();
+                $processedNewData[] = $newListingData;
+
                 $existing = $this->entityManager->getRepository(Listing::class)->findOneBy(['willhabenId' => $listing->getWillhabenId()]);
                 if ($existing) {
-                    $existing->addListingData($listing->getListingData()->first());
+                    $existing->addListingData($newListingData);
                     $existing->setLastSeen(new \DateTimeImmutable());
                     $listings[] = $existing;
                 } else {
@@ -114,9 +119,9 @@ class WillhabenScraper
             }
             $this->entityManager->flush();
 
-            foreach ($listings as $listing) {
-                if ($this->hasMissingImages($listing)) {
-                    $this->bus->dispatch(new DownloadImagesMessage($listing->getId()));
+            foreach ($processedNewData as $listingData) {
+                if ($this->hasMissingImages($listingData)) {
+                    $this->bus->dispatch(new DownloadImagesMessage($listingData->getListing()->getId()));
                 }
             }
 
@@ -229,9 +234,9 @@ class WillhabenScraper
         }
     }
 
-    private function hasMissingImages(Listing $listing): bool
+    private function hasMissingImages(ListingData $listingData): bool
     {
-        $imageUrls = $listing->getCurrentListingData()->getImages();
+        $imageUrls = $listingData->getImages();
 
         $filesystem = new Filesystem();
         foreach ($imageUrls as $imageUrl) {
