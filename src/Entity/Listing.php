@@ -62,7 +62,9 @@ class Listing
         $result = new self();
         $result->setTitle($json['description'] ?? '');
         $result->setWillhabenId($json['id'] ?? 0);
-        $result->addListingData(new ListingData($json));
+        $listingData = new ListingData($json);
+        $result->listingData->add($listingData);
+        $result->addListingData($listingData);
 
         return $result;
     }
