@@ -164,6 +164,7 @@ class WillhabenScraper
                     $response = $client->get($url, [
                         'proxy' => $randomProxy,
                         'query' => $query,
+                        'headers' => ['Accept-Encoding' => 'gzip'],
                     ]);
 
                     $this->debugLog($requestId, (string)$response->getBody(), 'Response Success');
