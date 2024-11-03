@@ -153,7 +153,7 @@ class WillhabenScraper
                     $url = 'https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote';
                     $params = [
                         'areaId' => 6,
-                        'NO_OF_ROOMS_BUCKET' => ['4X4', '5X5', '6X9'],
+                        'NO_OF_ROOMS_BUCKET' => ['4X4', '5X5', '6X9', '0X0'],
                         'ESTATE_SIZE/LIVING_AREA_FROM' => 95,
                         'rows' => 200,
                         'page' => $currentPage,
