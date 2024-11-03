@@ -4,7 +4,10 @@
 
 	<a class="btn btn-outline-secondary" href="{{ path('dashboard') }}">Zurück</a>
 
-	<h1>{{ listing.title }}</h1>
+	<h1>
+		<a href="{{ path('star_listing', {id: listing.id}) }}"><i class="{{ listing.starred ? 'fas' : 'far' }} fa-star"></i></a>
+		{{ listing.title }}
+	</h1>
 
 	<span class="badge bg-danger">{{ listing.priceMax|format_number }} € max</span>
 	<span class="badge bg-success">{{ listing.priceMin|format_number }} € min</span>

@@ -33,6 +33,15 @@ class ListingsController extends AbstractController
         return $this->render('details.twig', ['listing' => $listing]);
     }
 
+    #[Route('/listings/{id}/star', name: 'star_listing')]
+    public function star(Listing $listing, EntityManagerInterface $em): Response
+    {
+        $listing->setIsStarred(!$listing->isStarred());
+        $em->flush();
+
+        return $this->redirectToRoute('details', ['id' => $listing->getId()]);
+    }
+
     #[Route('/listings/{id}/fetch-images', name: 'fetch-images')]
     public function fetchImages(Listing $listing, MessageBusInterface $bus): Response
     {

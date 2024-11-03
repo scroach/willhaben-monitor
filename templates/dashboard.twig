@@ -23,7 +23,7 @@
 
 	<ul class="nav nav-tabs" id="myTab" role="tablist">
 		<li class="nav-item">
-			<a class="nav-link {{ not showAll and not sortBySale and not sortByFirstSeen ? 'active' : '' }}" href="{{ path('dashboard', {showAll: false, sortBySale: false}) }}">Letztes Monat by Datum</a>
+			<a class="nav-link {{ not showAll and not sortBySale and not sortByFirstSeen and not showStarred ? 'active' : '' }}" href="{{ path('dashboard', {showAll: false, sortBySale: false}) }}">Letztes Monat by Datum</a>
 		</li>
 		<li class="nav-item active">
 			<a class="nav-link {{ not showAll and sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: false, sortBySale: true}) }}">Letztes Monat By Sale</a>
@@ -36,6 +36,9 @@
 		</li>
 		<li class="nav-item">
 			<a class="nav-link {{ showFresh and sortByFirstSeen ? 'active' : '' }}" href="{{ path('dashboard', {showFresh: true, sortByFirstSeen: true}) }}">Oldies</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link {{ showStarred ? 'active' : '' }}" href="{{ path('dashboard', {showStarred: true}) }}"><i class="fas fa-star"></i></a>
 		</li>
 	</ul>
 
@@ -66,6 +69,9 @@
 		<tr>
 			<td>
 				<a href="{{ url('details', {id: listing.id}) }}">
+					{% if listing.starred %}
+						<i class="fas fa-star"></i>
+					{% endif %}
 					{{ listing.title }}
 				</a>
 			</td>
@@ -87,7 +93,13 @@
 			<td>{{ listing.area ? (listing.priceMax/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
 			<td>{{ listing.area ? (listing.priceMin/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
 			<td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
-			<td>{{ listing.lastSeen|date('d.m.Y H:i:s') }}</td>
+			<td>
+				{% if listing.lastSeen.diff(date()).days > 7 %}
+					<span class="badge text-bg-danger" title="Propbably gone">{{ listing.lastSeen|date('d.m.Y H:i:s') }}</span>
+				{% else %}
+					{{ listing.lastSeen|date('d.m.Y H:i:s') }}
+				{% endif %}
+			</td>
 			<td>{{ listing.ageInWeeks }} Wochen</td>
 			<td>
 				<img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px" loading="lazy" />

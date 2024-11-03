@@ -40,6 +40,11 @@
         {% endfor %}
 
         {% block content %}{% endblock %}
+
+        <script>
+            const tooltipTriggerList = document.querySelectorAll('[title]')
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+        </script>
     </div>
     </body>
 </html>

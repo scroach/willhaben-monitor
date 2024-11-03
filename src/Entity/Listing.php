@@ -49,6 +49,8 @@ class Listing
     private ?float $priceCurrentPerSqm = null;
     #[ORM\Column]
     private ?float $area = null;
+    #[ORM\Column]
+    private bool $isStarred = false;
 
     public function __construct()
     {
@@ -296,6 +298,16 @@ class Listing
     public function getAgeInWeeks(): ?int
     {
         return $this->firstSeen?->diff($this->lastSeen)->days/7;
+    }
+
+    public function isStarred(): bool
+    {
+        return $this->isStarred;
+    }
+
+    public function setIsStarred(bool $isStarred): void
+    {
+        $this->isStarred = $isStarred;
     }
 
 }
