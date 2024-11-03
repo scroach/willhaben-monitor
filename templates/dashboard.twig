@@ -94,10 +94,11 @@
 			<td>{{ listing.area ? (listing.priceMin/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
 			<td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
 			<td>
-				{% if listing.lastSeen.diff(date()).days > 7 %}
-					<span class="badge text-bg-danger" title="Propbably gone">{{ listing.lastSeen|date('d.m.Y H:i:s') }}</span>
+				{% set lastSeen = listing.lastSeen|default(date('1970-01-01')) %}
+				{% if lastSeen.diff(date()).days > 7 %}
+					<span class="badge text-bg-danger" title="Propbably gone">{{ lastSeen|date('d.m.Y H:i:s') }}</span>
 				{% else %}
-					{{ listing.lastSeen|date('d.m.Y H:i:s') }}
+					{{ lastSeen|date('d.m.Y H:i:s') }}
 				{% endif %}
 			</td>
 			<td>{{ listing.ageInWeeks }} Wochen</td>
