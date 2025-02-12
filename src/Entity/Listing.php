@@ -284,6 +284,10 @@ class Listing
         $this->setZip($this->getCurrentListingData()->getZip());
         $this->setTitleImage($this->getCurrentListingData()?->getImages()[0] ?? null);
         $this->setTitle($this->getCurrentListingData()?->getTitle() ?? $this->getTitle());
+
+        $allListingDates = array_map(fn (ListingData $l) => $l->getCreatedAt(), $this->getListingData()->toArray());
+        $this->setFirstSeen(min(array_filter([$this->getFirstSeen(), ...$allListingDates])));
+        $this->setLastSeen(max(array_filter([$this->getLastSeen(), ...$allListingDates])));
     }
 
     public function getSaleReduction(): float
