@@ -286,8 +286,8 @@ class Listing
         $this->setTitle($this->getCurrentListingData()?->getTitle() ?? $this->getTitle());
 
         $allListingDates = array_map(fn (ListingData $l) => $l->getCreatedAt(), $this->getListingData()->toArray());
-        $this->setFirstSeen(min(array_filter([$this->getFirstSeen(), ...$allListingDates])));
-        $this->setLastSeen(max(array_filter([$this->getLastSeen(), ...$allListingDates])));
+        $this->setFirstSeen(min(array_filter(...$allListingDates)));
+        $this->setLastSeen(max(array_filter(...$allListingDates)));
     }
 
     public function getSaleReduction(): float
