@@ -221,11 +221,23 @@ class WillhabenScraper
             $remoteUrl = $imageBaseUrl.$imageUrl;
 
             if (!$filesystem->exists($localPath)) {
-                //TODO try catch
-                //TODO guzzle with proxy?
                 $this->logger->info('Downloading image '.$imageUrl.' ('.($i+1).'/'.count($imageUrls).')');
-                $filesystem->appendToFile($localPath, file_get_contents($remoteUrl));
-                $downloadedSomething = true;
+
+                try {
+                    $client = new Client([
+                        'timeout' => 30,
+                        'verify' => false,
+                    ]);
+                    $response = $client->get($remoteUrl, [
+                        'proxy' => $this->fetchRandomProxy(),
+                        'headers' => ['Accept-Encoding' => 'gzip'],
+                    ]);
+
+                    $filesystem->appendToFile($localPath, $response->getBody()->getContents());
+                    $downloadedSomething = true;
+                } catch (ConnectException|RequestException|GuzzleException $exception) {
+                    $this->logger->error("Download of image via proxy failed: ".$exception->getMessage());
+                }
             } else {
                 $this->logger->info('Skipping existing image '.$imageUrl);
             }
