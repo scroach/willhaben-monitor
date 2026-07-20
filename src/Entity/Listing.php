@@ -20,10 +20,10 @@ class Listing
     #[ORM\Column]
     private ?int $willhabenId = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeInterface $firstSeen = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeInterface $lastSeen = null;
 
     #[ORM\Column(length: 255)]
