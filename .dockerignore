@@ -17,9 +17,11 @@
 **/docker-compose.yml
 **/Dockerfile
 **/Thumbs.db
+**/*.sql
 .github/
 docs/
 public/bundles/
+public/willhaben_images/
 tests/
 var/
 vendor/
