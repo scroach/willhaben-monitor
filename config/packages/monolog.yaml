@@ -1,5 +1,9 @@
 monolog:
     handlers:
+        file:
+          type: rotating_file
+          path: '%kernel.logs_dir%/%kernel.environment%.log'
+          level: info
         stdout:
             type: stream
             level: info
