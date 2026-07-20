@@ -4,3 +4,7 @@ monolog:
             type: stream
             level: info
             path: 'php://stdout'
+        main:
+          type: rotating_file
+          path: '%kernel.logs_dir%/%kernel.environment%.log'
+          level: info
