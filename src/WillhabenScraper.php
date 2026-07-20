@@ -9,6 +9,7 @@ use App\Entity\ListingData;
 use App\Message\DownloadImagesMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use GuzzleHttp\Client;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -216,6 +217,12 @@ class WillhabenScraper
 
         $downloadedSomething = false;
         $filesystem = new Filesystem();
+
+        $clients = [
+            'default' => $this->setupClient(),
+            'withProxy' => $this->setupClient(['proxy' => $this->fetchRandomProxy()]),
+        ];
+
         foreach ($imageUrls as $i => $imageUrl) {
             $localPath = $this->imageDir.$imageUrl;
             $remoteUrl = $imageBaseUrl.$imageUrl;
@@ -223,20 +230,20 @@ class WillhabenScraper
             if (!$filesystem->exists($localPath)) {
                 $this->logger->info('Downloading image '.$imageUrl.' ('.($i+1).'/'.count($imageUrls).')');
 
-                try {
-                    $client = new Client([
-                        'timeout' => 30,
-                        'verify' => false,
-                    ]);
-                    $response = $client->get($remoteUrl, [
-                        'proxy' => $this->fetchRandomProxy(),
-                        'headers' => ['Accept-Encoding' => 'gzip'],
-                    ]);
+                foreach ($clients as $clientKey => $client) {
+                    try {
+                        $response = $client->get($remoteUrl, [
+                            'proxy' => $this->fetchRandomProxy(),
+                            'headers' => ['Accept-Encoding' => 'gzip'],
+                        ]);
 
-                    $filesystem->appendToFile($localPath, $response->getBody()->getContents());
-                    $downloadedSomething = true;
-                } catch (ConnectException|RequestException|GuzzleException $exception) {
-                    $this->logger->error("Download of image via proxy failed: ".$exception->getMessage());
+                        $filesystem->appendToFile($localPath, $response->getBody()->getContents());
+                        $downloadedSomething = true;
+                        $this->logger->info('Downloaded image '.$imageUrl.' ('.($i+1).'/'.count($imageUrls).') via '.$clientKey);
+                        continue 2;
+                    } catch (ConnectException|RequestException|GuzzleException $exception) {
+                        $this->logger->error("Download of image via client $clientKey failed: ".$exception->getMessage());
+                    }
                 }
             } else {
                 $this->logger->info('Skipping existing image '.$imageUrl);
@@ -274,8 +281,53 @@ class WillhabenScraper
             $filesystem->appendToFile($logFile, "###############################################\r\n");
         }
         $filesystem->appendToFile($logFile, $content."\r\n");
+    }
 
-
+    private function setupClient(array $customOptions = []): Client
+    {
+        return new Client([
+            // Follow redirects automatically (like a browser)
+            'allow_redirects' => [
+                'max'             => 10,
+                'strict'          => false,
+                'referer'         => true, // Send Referer on redirects
+                'protocols'       => ['http', 'https'],
+                'track_redirects' => true
+            ],
+            // Enable cookies
+            'cookies' => new CookieJar(),
+            // Timeouts mimicking user patience
+            'timeout'         => 15.0,
+            'connect_timeout' => 5.0,
+            // Enable HTTP decompression (Brotli, Gzip, Deflate)
+            'decode_content' => true,
+            // HTTP/2 support (browsers default to HTTP/2 where available)
+            'version' => 2.0,
+            // Comprehensive Browser-like Headers
+            'headers' => [
+                // Realistic Chrome User-Agent string
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                // Standard Chrome Accept header
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                // Language preferences
+                'Accept-Language' => 'en-US,en;q=0.9',
+                // Browser compression support
+                'Accept-Encoding' => 'gzip, deflate, br, zstd',
+                // Sec-Fetch headers (Crucial for bypassing modern Cloudflare/Akamai checks)
+                'Sec-Fetch-Dest' => 'document',
+                'Sec-Fetch-Mode' => 'navigate',
+                'Sec-Fetch-Site' => 'none',
+                'Sec-Fetch-User' => '?1',
+                // Client Hints (Sec-CH-UA)
+                'Sec-CH-UA' => '"Not-A.Brand";v="99", "Chromium";v="124", "Google Chrome";v="124"',
+                'Sec-CH-UA-Mobile' => '?0',
+                'Sec-CH-UA-Platform' => '"Windows"',
+                // Connection & Cache controls
+                'Upgrade-Insecure-Requests' => '1',
+                'Cache-Control'             => 'max-age=0',
+            ],
+            ...$customOptions,
+        ]);
     }
 
 }
