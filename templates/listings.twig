@@ -1,0 +1,44 @@
+{# templates/blog/layout.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block content %}
+	<h1>Starred</h1>
+
+	<ul class="nav nav-tabs" id="myTab" role="tablist">
+		<li class="nav-item">
+			<a class="nav-link " href="{{ path('dashboard') }}">Dashboard</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link active" href="{{ path('starred') }}"><i class="fas fa-star"></i></a>
+		</li>
+	</ul>
+
+    <div class="my-3">
+        <table class="table table" id="listings-table">
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>m²</th>
+                <th>€ current</th>
+                <th>% Sale</th>
+                <th>€/m² current</th>
+                <th>€ Max</th>
+                <th>€ Min</th>
+                <th>€/m² max</th>
+                <th>€/m² min</th>
+                <th>First seen</th>
+                <th>Last seen</th>
+                <th>Age</th>
+                <th>Pics</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for listing in listings %}
+                {% include 'single_listing_row.twig' with {listing: listing} only %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+{% endblock %}

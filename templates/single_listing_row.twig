@@ -1,0 +1,40 @@
+<tr>
+    <td>
+        <a href="{{ url('details', {id: listing.id}) }}">
+            {% if listing.starred %}
+                <i class="fas fa-star"></i>
+            {% endif %}
+            {{ listing.title }}
+        </a>
+    </td>
+    <td>{{ listing.area is null ? '?' : listing.area|format_number }}</td>
+    <td>{{ listing.priceCurrent is null ? '?' : listing.priceCurrent|format_number }}</td>
+    <td>
+        {% set diff = listing.getSaleReduction %}
+        {% if listing.priceCurrent < listing.priceMax %}
+            <span class="badge bg-success">-{{ diff|format_number({fraction_digit:0}) }}%</span>
+        {% elseif listing.priceCurrent > listing.priceMax %}
+            <span class="badge bg-danger">+{{ diff|format_number({fraction_digit:0}) }}%</span>
+        {% else %}
+            <span class="badge bg-secondary">{{ diff|format_number({fraction_digit:0}) }}%</span>
+        {% endif %}
+    </td>
+    <td>{{ listing.priceCurrentPerSqm is null ? '?' : listing.priceCurrentPerSqm|format_number }}</td>
+    <td>{{ listing.priceMax is null ? '?' : listing.priceMax|format_number }}</td>
+    <td>{{ listing.priceMin is null ? '?' : listing.priceMin|format_number }}</td>
+    <td>{{ listing.area ? (listing.priceMax/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
+    <td>{{ listing.area ? (listing.priceMin/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
+    <td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
+    <td>
+        {% set lastSeen = listing.lastSeen|default(date('1970-01-01')) %}
+        {% if lastSeen.diff(date()).days > 7 %}
+            <span class="badge text-bg-danger" title="Propbably gone">{{ lastSeen|date('d.m.Y H:i:s') }}</span>
+        {% else %}
+            {{ lastSeen|date('d.m.Y H:i:s') }}
+        {% endif %}
+    </td>
+    <td>{{ listing.ageInWeeks }} Wochen</td>
+    <td>
+        <img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px" loading="lazy" />
+    </td>
+</tr>

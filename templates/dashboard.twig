@@ -15,38 +15,28 @@
 			{{ form_end(form) }}
 	</div>
 
-	{% if showAll %}
-		<h2>{{ listings|length }} Listings total</h2>
-	{% else %}
-		<h2>{{ listings|length }} Listings seen from {{ from|format_date }} to {{ to|format_date }}</h2>
-	{% endif %}
+    <h2>
+        {{ totalCount }} Listings total /
+        {{ activeLastMonth }} aktiv im letzten Monat /
+        {{ soldLastMonth }} "verkauft" im letzten Monat
+    </h2>
 
-	<ul class="nav nav-tabs" id="myTab" role="tablist">
-		<li class="nav-item">
-			<a class="nav-link {{ not showAll and not sortBySale and not sortByFirstSeen and not showStarred ? 'active' : '' }}" href="{{ path('dashboard', {showAll: false, sortBySale: false}) }}">Letztes Monat by Datum</a>
-		</li>
-		<li class="nav-item active">
-			<a class="nav-link {{ not showAll and sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: false, sortBySale: true}) }}">Letztes Monat By Sale</a>
-		</li>
-		<li class="nav-item">
-			<a class="nav-link {{ showAll and  not sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: true, sortBySale: false}) }}">Alle by Datum</a>
-		</li>
-		<li class="nav-item">
-			<a class="nav-link {{ showAll and sortBySale ? 'active' : '' }}" href="{{ path('dashboard', {showAll: true, sortBySale: true}) }}">Alle By Sale</a>
-		</li>
-		<li class="nav-item">
-			<a class="nav-link {{ showFresh and sortByFirstSeen ? 'active' : '' }}" href="{{ path('dashboard', {showFresh: true, sortByFirstSeen: true}) }}">Oldies</a>
-		</li>
-		<li class="nav-item">
-			<a class="nav-link {{ showStarred ? 'active' : '' }}" href="{{ path('dashboard', {showStarred: true}) }}"><i class="fas fa-star"></i></a>
-		</li>
-	</ul>
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" href="{{ path('dashboard') }}">Dashboard</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="{{ path('starred') }}"><i class="fas fa-star"></i></a>
+        </li>
+    </ul>
 
 	{{ render(controller(
 		'App\\Controller\\ListingsController::scatterChartStats', {}
 	)) }}
 
-	<table class="table table">
+    <div class="my-3">
+
+	<table class="table table" id="listings-table">
 		<thead>
 		<tr>
 			<th>Title</th>
@@ -65,49 +55,39 @@
 		</tr>
 		</thead>
 		<tbody>
-		{% for listing in listings %}
-		<tr>
-			<td>
-				<a href="{{ url('details', {id: listing.id}) }}">
-					{% if listing.starred %}
-						<i class="fas fa-star"></i>
-					{% endif %}
-					{{ listing.title }}
-				</a>
-			</td>
-			<td>{{ listing.area is null ? '?' : listing.area|format_number }}</td>
-			<td>{{ listing.priceCurrent is null ? '?' : listing.priceCurrent|format_number }}</td>
-			<td>
-				{% set diff = listing.getSaleReduction %}
-				{% if listing.priceCurrent < listing.priceMax %}
-					<span class="badge bg-success">-{{ diff|format_number({fraction_digit:0}) }}%</span>
-				{% elseif listing.priceCurrent > listing.priceMax %}
-					<span class="badge bg-danger">+{{ diff|format_number({fraction_digit:0}) }}%</span>
-				{% else %}
-					<span class="badge bg-secondary">{{ diff|format_number({fraction_digit:0}) }}%</span>
-				{% endif %}
-			</td>
-			<td>{{ listing.priceCurrentPerSqm is null ? '?' : listing.priceCurrentPerSqm|format_number }}</td>
-			<td>{{ listing.priceMax is null ? '?' : listing.priceMax|format_number }}</td>
-			<td>{{ listing.priceMin is null ? '?' : listing.priceMin|format_number }}</td>
-			<td>{{ listing.area ? (listing.priceMax/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
-			<td>{{ listing.area ? (listing.priceMin/listing.area)|format_number({fraction_digit: 0}) : '?' }}</td>
-			<td>{{ listing.firstSeen|date('d.m.Y H:i:s') }}</td>
-			<td>
-				{% set lastSeen = listing.lastSeen|default(date('1970-01-01')) %}
-				{% if lastSeen.diff(date()).days > 7 %}
-					<span class="badge text-bg-danger" title="Propbably gone">{{ lastSeen|date('d.m.Y H:i:s') }}</span>
-				{% else %}
-					{{ lastSeen|date('d.m.Y H:i:s') }}
-				{% endif %}
-			</td>
-			<td>{{ listing.ageInWeeks }} Wochen</td>
-			<td>
-				<img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px" loading="lazy" />
-			</td>
-		</tr>
+{#		{% for listing in listings %}#}
+{#            {% include 'single_listing_row.twig' with {listing: listing} only %}#}
+{#		{% endfor %}#}
 		</tbody>
-		{% endfor %}
 	</table>
+    </div>
+
+    <script>
+        $(function () {
+            $('#listings-table').DataTable({
+                serverSide: true,
+                processing: true,
+                ajax: {
+                    url: '{{ url('render_listing_rows') }}',
+                    type: 'GET'
+                },
+                columns: [
+                    { data: 'title' },
+                    { data: 'area' },
+                    { data: 'price' },
+                    { data: 'sale' },
+                    { data: 'pricePerArea' },
+                    { data: 'priceMax' },
+                    { data: 'priceMin' },
+                    { data: 'pricePerAreaMax' },
+                    { data: 'pricePerAreaMin' },
+                    { data: 'firstSeen' },
+                    { data: 'lastSeen' },
+                    { data: 'ageInWeeks' },
+                    { data: 'pics' },
+                ]
+            });
+        });
+    </script>
 
 {% endblock %}
