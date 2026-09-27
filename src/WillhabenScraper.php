@@ -219,7 +219,7 @@ class WillhabenScraper
         $filesystem = new Filesystem();
 
         $clients = [
-            'default' => $this->setupClient(),
+            'default' => $this->setupClient(['proxy' => '']),
             'withProxy' => $this->setupClient(['proxy' => $this->fetchRandomProxy()]),
         ];
 
@@ -233,7 +233,6 @@ class WillhabenScraper
                 foreach ($clients as $clientKey => $client) {
                     try {
                         $response = $client->get($remoteUrl, [
-                            'proxy' => $this->fetchRandomProxy(),
                             'headers' => ['Accept-Encoding' => 'gzip'],
                         ]);
 
