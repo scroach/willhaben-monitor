@@ -6,6 +6,7 @@ namespace App;
 
 use App\Entity\Listing;
 use App\Entity\ListingData;
+use App\Entity\ListingType;
 use App\Message\DownloadImagesMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use GuzzleHttp\Client;
@@ -35,9 +36,10 @@ class WillhabenScraper
         $this->imageDir = $kernel->getProjectDir().'/public/willhaben_images/';
     }
 
-    public function scrape()
+    public function scrape(): void
     {
-        $this->searchPages();
+        $this->searchPages('https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote', ListingType::HOUSE);
+        $this->searchPages('https://www.willhaben.at/iad/immobilien/grundstuecke/grundstueck-angebote', ListingType::LAND);
     }
 
     private function fetchRandomProxy(): string
@@ -91,7 +93,7 @@ class WillhabenScraper
         }
     }
 
-    private function searchPages()
+    private function searchPages(string $url, ListingType $type): void
     {
         $currentPage = 1;
 
@@ -99,12 +101,13 @@ class WillhabenScraper
             $this->entityManager->clear();
             $listings = [];
             $processedNewData = [];
-            $listingsResult = $this->doSearchRequest($currentPage);
+            $listingsResult = $this->doSearchRequest($url, $currentPage);
             $count = count($listingsResult->getListings());
 
             $this->logger->info("got search response, found $count listings on page {$listingsResult->getCurrentPage()} of {$listingsResult->getMaxPage()}");
 
             foreach ($listingsResult->getListings() as $listing) {
+                $listing->setType($type);
                 $newListingData = $listing->getListingData()->first();
                 $this->entityManager->persist($newListingData);
                 $processedNewData[] = $newListingData;
@@ -134,7 +137,7 @@ class WillhabenScraper
         $this->logger->info("done!");
     }
 
-    function doSearchRequest(int $currentPage): ListingsResult
+    function doSearchRequest(string $url, int $currentPage): ListingsResult
     {
         $client = new Client([
             'timeout' => 30,
@@ -151,11 +154,8 @@ class WillhabenScraper
                 try {
                     // https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote?0%5BareaId%5D=6&1%5BNO_OF_ROOMS_BUCKET%5D=4X4&2%5BNO_OF_ROOMS_BUCKET%5D=5X5&3%5BNO_OF_ROOMS_BUCKET%5D=6X9&4%5BESTATE_SIZE%2FLIVING_AREA_FROM%5D=95&5%5Brows%5D=200&6%5Bpage%5D=1
                     // https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote?0%5BareaId%5D=6&1%5BNO_OF_ROOMS_BUCKET%5D=4X4&2%5BNO_OF_ROOMS_BUCKET%5D=5X5&3%5BNO_OF_ROOMS_BUCKET%5D=6X9&4%5BESTATE_SIZE/LIVING_AREA_FROM%5D=95&5%5Brows%5D=200&6%5Bpage%5D=1&sfId=60919f25-e533-4c18-80d9-6fcea1d01901&rows=30&isNavigation=true&areaId=6&page=1
-                    $url = 'https://www.willhaben.at/iad/immobilien/haus-kaufen/haus-angebote';
                     $params = [
                         'areaId' => 6,
-                        'NO_OF_ROOMS_BUCKET' => ['4X4', '5X5', '6X9', '0X0'],
-                        'ESTATE_SIZE/LIVING_AREA_FROM' => 95,
                         'rows' => 200,
                         'page' => $currentPage,
                     ];

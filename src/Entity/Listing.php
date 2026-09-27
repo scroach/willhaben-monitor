@@ -17,6 +17,9 @@ class Listing
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(type: 'string', enumType: ListingType::class)]
+    private ?ListingType $type = null;
+
     #[ORM\Column]
     private ?int $willhabenId = null;
 
@@ -312,6 +315,16 @@ class Listing
     public function setIsStarred(bool $isStarred): void
     {
         $this->isStarred = $isStarred;
+    }
+
+    public function getType(): ?ListingType
+    {
+        return $this->type;
+    }
+
+    public function setType(?ListingType $type): void
+    {
+        $this->type = $type;
     }
 
 }

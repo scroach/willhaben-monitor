@@ -7,11 +7,11 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20241103140300 extends AbstractMigration
+final class Version20260928001300 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'added is_starred column';
+        return 'added type column';
     }
 
     public function up(Schema $schema): void
@@ -19,9 +19,9 @@ final class Version20241103140300 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql(
             <<<SQL
-            ALTER TABLE `listings`
-                ADD COLUMN `is_starred` BIGINT NOT NULL DEFAULT '0' AFTER `title_image`;
-        SQL
+                ALTER TABLE `listings`
+                    ADD COLUMN `type` VARCHAR(50) NULL DEFAULT 'house' AFTER `willhaben_id`;
+                SQL,
         );
     }
 
