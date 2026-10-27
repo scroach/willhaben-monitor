@@ -27,6 +27,55 @@ class ImmobilienScout24Scraper
         'land' => '/grundstuecke',
     ];
 
+    /**
+     * The website's result list uses 25 hits per page. The server-rendered HTML
+     * only contains 15 of them, so the GraphQL endpoint is used directly.
+     */
+    private const SEARCH_PAGE_SIZE = 25;
+
+    private const SEARCH_QUERY = <<<'GRAPHQL'
+        query getDataByURL($params: ResultURLInput) {
+          getDataByURL(params: $params) {
+            results {
+              totalHits
+              pagination {
+                pageIndex
+                totalPages
+                currentURL
+                nextURL
+                previousURL
+              }
+              hits {
+                exposeId
+                headline
+                addressString
+                primaryPrice
+                primaryArea
+                numberOfRooms
+                mainKeyFacts {
+                  value
+                  label
+                }
+                isPrivate
+                dateCreated
+                links {
+                  targetURL
+                  absoluteURL
+                }
+                meta
+                realtorContact {
+                  company
+                  name
+                }
+                primaryPictureImageProps {
+                  src
+                }
+              }
+            }
+          }
+        }
+        GRAPHQL;
+
     private string $imageDir;
     private ?Client $client = null;
 
@@ -99,22 +148,47 @@ class ImmobilienScout24Scraper
 
     public function doSearchRequest(string $baseUrl, int $currentPage = 1): ImmobilienScout24ListingsResult
     {
+        $path = parse_url($baseUrl, PHP_URL_PATH);
+        $path = is_string($path) && $path !== '' ? $path : '/regional/'.self::REGION;
+
         $url = $currentPage <= 1
-            ? $baseUrl
-            : rtrim($baseUrl, '/').'/seite-'.$currentPage;
+            ? $path
+            : rtrim($path, '/').'/seite-'.$currentPage;
 
         $client = $this->getClient();
         $lastException = null;
 
         for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
             try {
-                $response = $client->get($url, [
+                $response = $client->post('https://www.immobilienscout24.at/portal/graphql', [
+                    'json' => [
+                        'operationName' => 'getDataByURL',
+                        'query' => self::SEARCH_QUERY,
+                        'variables' => [
+                            'params' => [
+                                'URL' => $url,
+                                'size' => self::SEARCH_PAGE_SIZE,
+                            ],
+                        ],
+                    ],
                     'headers' => [
-                        'Referer' => 'https://www.immobilienscout24.at/',
+                        'Accept' => 'application/json',
+                        'Origin' => 'https://www.immobilienscout24.at',
+                        'Referer' => 'https://www.immobilienscout24.at'.$url,
                     ],
                 ]);
 
-                return ImmobilienScout24ListingsResult::fromHtml((string) $response->getBody());
+                $data = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                if (!is_array($data)) {
+                    throw new \RuntimeException('The ImmoScout24 GraphQL response is not an object.');
+                }
+
+                if (isset($data['errors']) && is_array($data['errors'])) {
+                    $message = (string) ($data['errors'][0]['message'] ?? 'Unknown GraphQL error');
+                    throw new \RuntimeException('ImmoScout24 GraphQL error: '.$message);
+                }
+
+                return ImmobilienScout24ListingsResult::fromGraphQL($data);
             } catch (GuzzleException $exception) {
                 $lastException = $exception;
                 $statusCode = $exception instanceof RequestException
@@ -136,7 +210,7 @@ class ImmobilienScout24Scraper
                 if ($attempt < self::MAX_RETRIES) {
                     sleep($waitSeconds);
                 }
-            } catch (\RuntimeException $exception) {
+            } catch (\JsonException|\RuntimeException $exception) {
                 $lastException = $exception;
                 $this->logger->warning(sprintf(
                     'ImmoScout24 response could not be parsed (attempt %d/%d): %s',

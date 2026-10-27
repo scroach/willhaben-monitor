@@ -10,12 +10,7 @@ final class ImmobilienScout24ListingsResult
     {
     }
 
-    public static function fromHtml(string $html): self
-    {
-        return new self(ImmobilienScout24State::extract($html));
-    }
-
-    public static function fromArray(array $data): self
+    public static function fromGraphQL(array $data): self
     {
         return new self($data);
     }
@@ -47,7 +42,7 @@ final class ImmobilienScout24ListingsResult
 
     private function getResults(): array
     {
-        $results = $this->data['reduxAsyncConnect']['pageData']['results'] ?? [];
+        $results = $this->data['data']['getDataByURL']['results'] ?? [];
 
         return is_array($results) ? $results : [];
     }
