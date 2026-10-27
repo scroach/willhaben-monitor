@@ -7,6 +7,7 @@
 	<h1>
 		<a href="{{ path('star_listing', {id: listing.id}) }}"><i class="{{ listing.starred ? 'fas' : 'far' }} fa-star"></i></a>
 		{{ listing.title }}
+		<span class="badge bg-dark">{{ listing.sourceLabel }}</span>
 	</h1>
 
 	<span class="badge bg-danger">{{ listing.priceMax|format_number }} € max</span>
@@ -17,18 +18,19 @@
 	<span class="badge bg-secondary">First seen {{ listing.firstSeen|date('d.m.Y H:i:s') }}</span>
 	<span class="badge bg-secondary">Last seen {{ listing.lastSeen|date('d.m.Y H:i:s') }}</span>
 
-	<a class="btn btn-primary"
-	   href="https://www.willhaben.at/iad/immobilien/d/haus-kaufen/steiermark/xxx-{{ listing.willhabenId }}/"
-	   target="_blank">
-		Willhaben öffnen
-	</a>
+	{% if listing.externalUrl %}
+		<a class="btn btn-primary" href="{{ listing.externalUrl }}" target="_blank">
+			{{ listing.sourceLabel }} öffnen
+		</a>
+	{% endif %}
 
 	<div class="row">
 		<div class="col">
 			<h1>Fotos <a href="{{ path('fetch-images', {id: listing.id}) }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-refresh"></i></a></h1>
 			<div>
 				{% for image in listing.currentListingData.images %}
-					<img alt="{{ image }}" src="{{ asset('willhaben_images/'~image) }}" style="max-width: 100px" loading="lazy" />
+					{% set imageSrc = image starts with 'http' ? image : asset(listing.imageDirectory~image) %}
+					<img alt="{{ image }}" src="{{ imageSrc }}" style="max-width: 100px" loading="lazy" />
 				{% endfor %}
 			</div>
 		</div>

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Listing;
+use App\ImmobilienScout24Scraper;
 use App\Message\DownloadImagesMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -24,8 +25,14 @@ class ListingsController extends AbstractController
     }
 
     #[Route('/listings/{id}', name: 'details')]
-    public function details(Listing $listing, EntityManagerInterface $em, LoggerInterface $logger): Response
-    {
+    public function details(
+        Listing $listing,
+        EntityManagerInterface $em,
+        LoggerInterface $logger,
+        ImmobilienScout24Scraper $immoscoutScraper,
+    ): Response {
+        $immoscoutScraper->enrichImages($listing);
+
         $listing->updateAggregatedDataFull();
         $em->flush();
 

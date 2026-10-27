@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Entity\Listing;
 use App\Entity\ListingData;
+use App\Entity\ListingSource;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -36,6 +37,11 @@ class CheckCommand extends Command
             }
 
             $lastListingId = $listing->getId();
+
+            if ($listing->getSource() === ListingSource::IMMOBILIENSCOUT24) {
+                $this->em->clear();
+                continue;
+            }
 
             $ids = [];
 

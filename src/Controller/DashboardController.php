@@ -22,14 +22,19 @@ class DashboardController extends AbstractController
     public function index(EntityManagerInterface $em, Request $request): Response
     {
         $form = $this->createFormBuilder()
-            ->add('willhabenId', TextType::class, ['attr' => ['class' => 'form-control', 'placeholder' => 'Willhaben ID']])
+            ->add('willhabenId', TextType::class, ['attr' => ['class' => 'form-control', 'placeholder' => 'Willhaben / ImmoScout24 ID']])
             ->add('submit', SubmitType::class, ['label' => 'Go', 'attr' => ['class' => 'btn btn-primary']])
             ->getForm();
         $form->handleRequest($request);
         if($form->isSubmitted() && $form->isValid()){
             $data = $form->getData();
+            $id = trim((string) $data['willhabenId']);
+            $repository = $em->getRepository(Listing::class);
 
-            $listing = $em->getRepository(Listing::class)->findOneBy(['willhabenId' => $data['willhabenId']], ['lastSeen' => 'DESC']);
+            $listing = preg_match('/^[0-9a-f]{24}$/i', $id)
+                ? $repository->findOneBy(['immoscoutId' => $id], ['lastSeen' => 'DESC'])
+                : $repository->findOneBy(['willhabenId' => (int) $id], ['lastSeen' => 'DESC']);
+
             if($listing) {
                 return $this->redirectToRoute('details', ['id' => $listing->getId()]);
             } else {
@@ -124,12 +129,14 @@ class DashboardController extends AbstractController
                 $allowedSortColumns = [
                     'id' => 'l.id',
                     'title' => 'l.title',
+                    'source' => 'l.source',
                     'firstSeen' => 'l.firstSeen',
                     'lastSeen' => 'l.lastSeen',
                     'price' => 'l.priceCurrent',
                     'area' => 'l.area',
                 ];
                 //TODO order by sale reduction is not working
+
 
                 if (array_key_exists($sortColumnName, $allowedSortColumns)) {
                     $qb->addOrderBy($allowedSortColumns[$sortColumnName], $sortDirection);
@@ -148,7 +155,10 @@ class DashboardController extends AbstractController
         /** @var Listing $listing */
         foreach ($paginator as $listing) {
             $url = $this->generateUrl('details', ['id' => $listing->getId()]);
-            $imgUrl = $assetManager->getUrl('willhaben_images/'.$listing->getTitleImage());
+            $titleImage = (string) $listing->getTitleImage();
+            $imgUrl = str_starts_with($titleImage, 'http')
+                ? $titleImage
+                : $assetManager->getUrl($listing->getImageDirectory().$titleImage);
 
             $title = <<<HTML
                 <a href="$url">{$listing->getTitle()}</a>
@@ -160,6 +170,7 @@ class DashboardController extends AbstractController
             $data[] = [
                 'id' => $listing->getId(),
                 'title' => $title,
+                'source' => $listing->getSourceLabel(),
                 'area' => $listing->getArea(),
                 'price' => $listing->getPriceCurrent(),
                 'sale' => $listing->getSaleReduction(),

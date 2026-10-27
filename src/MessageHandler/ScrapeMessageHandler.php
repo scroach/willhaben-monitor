@@ -3,6 +3,7 @@
 namespace App\MessageHandler;
 
 use App\Entity\Listing;
+use App\ImmobilienScout24Scraper;
 use App\Message\DownloadImagesMessage;
 use App\Message\FetchAllListingsMessage;
 use App\WillhabenScraper;
@@ -13,6 +14,7 @@ class ScrapeMessageHandler
 {
     public function __construct(
         private readonly WillhabenScraper $scraper,
+        private readonly ImmobilienScout24Scraper $immoscoutScraper,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -26,7 +28,18 @@ class ScrapeMessageHandler
     #[AsMessageHandler]
     public function handleDownloadNotification(DownloadImagesMessage $message): void
     {
-        $this->scraper->fetchImage($this->em->find(Listing::class, $message->listingId));
+        $listing = $this->em->find(Listing::class, $message->listingId);
+        if (!$listing) {
+            return;
+        }
+
+        if ($listing->isImmoscout24()) {
+            $this->immoscoutScraper->fetchImage($listing);
+
+            return;
+        }
+
+        $this->scraper->fetchImage($listing);
     }
 
 }

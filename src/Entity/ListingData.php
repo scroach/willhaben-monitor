@@ -118,7 +118,15 @@ class ListingData
 
     public function getImages(): array
     {
-        return $this->getAttribute('ALL_IMAGE_URLS') !== null ? explode(';', $this->getAttribute('ALL_IMAGE_URLS')) : [];
+        // Images that have already been downloaded are preferred over remote URLs.
+        $localImages = $this->getAttribute('ALL_IMAGE_FILES');
+        if ($localImages !== null && $localImages !== '') {
+            return explode(';', $localImages);
+        }
+
+        $remoteImages = $this->getAttribute('ALL_IMAGE_URLS');
+
+        return $remoteImages !== null && $remoteImages !== '' ? explode(';', $remoteImages) : [];
     }
 
     public function getLivingSize(): ?float

@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ListingRepository::class)]
 #[ORM\Table(name: 'listings')]
+#[ORM\Index(name: 'idx_listings_immoscout_id', columns: ['immoscout_id'])]
 class Listing
 {
     #[ORM\Id]
@@ -20,8 +21,14 @@ class Listing
     #[ORM\Column(type: 'string', enumType: ListingType::class)]
     private ?ListingType $type = null;
 
+    #[ORM\Column(type: 'string', enumType: ListingSource::class, options: ['default' => 'willhaben'])]
+    private ListingSource $source = ListingSource::WILLHABEN;
+
     #[ORM\Column]
     private ?int $willhabenId = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $immoscoutId = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private ?\DateTimeInterface $firstSeen = null;
@@ -65,6 +72,7 @@ class Listing
     public static function fromJson(array $json): self
     {
         $result = new self();
+        $result->setSource(ListingSource::WILLHABEN);
         $result->setTitle($json['description'] ?? '');
         $result->setWillhabenId($json['id'] ?? 0);
         $listingData = new ListingData($json);
@@ -89,6 +97,65 @@ class Listing
         $this->willhabenId = $willhabenId;
 
         return $this;
+    }
+
+    public function getSource(): ListingSource
+    {
+        return $this->source;
+    }
+
+    public function setSource(ListingSource $source): self
+    {
+        $this->source = $source;
+
+        return $this;
+    }
+
+    public function getImmoscoutId(): ?string
+    {
+        return $this->immoscoutId;
+    }
+
+    public function setImmoscoutId(?string $immoscoutId): self
+    {
+        $this->immoscoutId = $immoscoutId;
+
+        return $this;
+    }
+
+    public function getSourceLabel(): string
+    {
+        return match ($this->source) {
+            ListingSource::WILLHABEN => 'Willhaben',
+            ListingSource::IMMOBILIENSCOUT24 => 'ImmoScout24',
+        };
+    }
+
+    public function getExternalUrl(): ?string
+    {
+        return match ($this->source) {
+            ListingSource::WILLHABEN => $this->willhabenId
+                ? 'https://www.willhaben.at/iad/immobilien/d/haus-kaufen/steiermark/xxx-'.$this->willhabenId.'/'
+                : null,
+            ListingSource::IMMOBILIENSCOUT24 => $this->immoscoutId
+                ? 'https://www.immobilienscout24.at/expose/'.$this->immoscoutId
+                : null,
+        };
+    }
+
+    public function isWillhaben(): bool
+    {
+        return $this->source === ListingSource::WILLHABEN;
+    }
+
+    public function isImmoscout24(): bool
+    {
+        return $this->source === ListingSource::IMMOBILIENSCOUT24;
+    }
+
+    public function getImageDirectory(): string
+    {
+        return $this->isImmoscout24() ? 'immoscout_images/' : 'willhaben_images/';
     }
 
     public function getFirstSeen(): ?\DateTimeInterface

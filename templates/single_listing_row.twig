@@ -7,6 +7,7 @@
             {{ listing.title }}
         </a>
     </td>
+    <td>{{ listing.sourceLabel }}</td>
     <td>{{ listing.area is null ? '?' : listing.area|format_number }}</td>
     <td>{{ listing.priceCurrent is null ? '?' : listing.priceCurrent|format_number }}</td>
     <td>
@@ -35,6 +36,8 @@
     </td>
     <td>{{ listing.ageInWeeks }} Wochen</td>
     <td>
-        <img alt="{{ listing.titleImage }}" src="{{ asset('willhaben_images/'~listing.titleImage) }}" style="max-width: 100px" loading="lazy" />
+        {% set titleImage = listing.titleImage|default('') %}
+        {% set imageSrc = titleImage starts with 'http' ? titleImage : asset(listing.imageDirectory~titleImage) %}
+        <img alt="{{ titleImage }}" src="{{ imageSrc }}" style="max-width: 100px" loading="lazy" />
     </td>
 </tr>

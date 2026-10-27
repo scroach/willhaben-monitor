@@ -6,6 +6,7 @@ namespace App;
 
 use App\Entity\Listing;
 use App\Entity\ListingData;
+use App\Entity\ListingSource;
 use App\Entity\ListingType;
 use App\Message\DownloadImagesMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -112,7 +113,10 @@ class WillhabenScraper
                 $this->entityManager->persist($newListingData);
                 $processedNewData[] = $newListingData;
 
-                $existing = $this->entityManager->getRepository(Listing::class)->findOneBy(['willhabenId' => $listing->getWillhabenId()]);
+                $existing = $this->entityManager->getRepository(Listing::class)->findOneBy([
+                    'willhabenId' => $listing->getWillhabenId(),
+                    'source' => ListingSource::WILLHABEN->value,
+                ]);
                 if ($existing) {
                     $existing->addListingData($newListingData);
                     $existing->setLastSeen(new \DateTimeImmutable());
