@@ -19,7 +19,7 @@ services:
       start_period: 30s
     environment:
       # Run "composer require symfony/orm-pack" to install and configure Doctrine ORM
-      DATABASE_URL: mysql://root:${MYSQL_PASSWORD:-my-secret-pw}@database:3306/${MYSQL_DB:-app}?serverVersion=8.0
+      DATABASE_URL: mysql://root:${MYSQL_PASSWORD:-my-secret-pw}@database:3306/${MYSQL_DB:-app}?serverVersion=8.4
 
   messenger:
     build:
@@ -29,7 +29,7 @@ services:
       - ./:/srv/app
     command: 'bin/console messenger:consume scheduler_default async --limit=30'
     environment:
-      DATABASE_URL: mysql://root:${MYSQL_PASSWORD:-my-secret-pw}@database:3306/${MYSQL_DB:-app}?serverVersion=8.0
+      DATABASE_URL: mysql://root:${MYSQL_PASSWORD:-my-secret-pw}@database:3306/${MYSQL_DB:-app}?serverVersion=8.4
       PROXIES: ${PROXIES:-''}
     healthcheck:
       interval: 10s
@@ -54,7 +54,7 @@ services:
 
 ###> doctrine/doctrine-bundle ###
   database:
-    image: mysql:8.0
+    image: mysql:8.4
     environment:
       MYSQL_DB: ${MYSQL_DB:-app}
       # You should definitely change the password in production
