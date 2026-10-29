@@ -2,6 +2,7 @@
 
 namespace App\Scheduler;
 
+use App\Entity\ListingSource;
 use App\Message\FetchAllListingsMessage;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
@@ -14,7 +15,8 @@ class DefaultScheduleProvider implements ScheduleProviderInterface
     public function getSchedule(): Schedule
     {
         return (new Schedule())->add(
-            RecurringMessage::every('1 day', new FetchAllListingsMessage('i am scheduled :)'))
+            RecurringMessage::every('1 day', new FetchAllListingsMessage(ListingSource::WILLHABEN)),
+            RecurringMessage::every('1 day', new FetchAllListingsMessage(ListingSource::IMMOBILIENSCOUT24)),
         );
     }
 }

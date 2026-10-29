@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Listing;
+use App\Entity\ListingSource;
 use App\Entity\ListingType;
 use App\Message\FetchAllListingsMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -108,7 +109,8 @@ class DashboardController extends AbstractController
     #[Route('/dispatch', name: 'dispatch')]
     public function dispatch(MessageBusInterface $bus, EntityManagerInterface $em, Request $request): Response
     {
-        $bus->dispatch(new FetchAllListingsMessage('manual'));
+        $bus->dispatch(new FetchAllListingsMessage(ListingSource::WILLHABEN));
+        $bus->dispatch(new FetchAllListingsMessage(ListingSource::IMMOBILIENSCOUT24));
         $em->flush();
 
         return $this->redirectToRoute($this->dashboardRouteFor($request->query->getString('type', '')));

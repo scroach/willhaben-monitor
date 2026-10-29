@@ -2,16 +2,13 @@
 
 namespace App\Message;
 
+use App\Entity\ListingSource;
+
 class FetchAllListingsMessage
 {
     public function __construct(
-        private readonly string $message
+        public readonly ListingSource $source,
     ) {
-    }
-
-    public function getMessage(): string
-    {
-        return $this->message;
     }
 
 }

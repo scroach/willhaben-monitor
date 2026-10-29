@@ -3,6 +3,7 @@
 namespace App\MessageHandler;
 
 use App\Entity\Listing;
+use App\Entity\ListingSource;
 use App\ImmobilienScout24Scraper;
 use App\Message\DownloadImagesMessage;
 use App\Message\FetchAllListingsMessage;
@@ -22,7 +23,11 @@ class ScrapeMessageHandler
     #[AsMessageHandler]
     public function handleFetchNotification(FetchAllListingsMessage $message): void
     {
-        $this->scraper->scrape();
+        match ($message->source) {
+            ListingSource::WILLHABEN => $this->scraper->scrape(),
+            ListingSource::IMMOBILIENSCOUT24 => $this->immoscoutScraper->scrape(0),
+            default => throw new \InvalidArgumentException('Unknown listing source'),
+        };
     }
 
     #[AsMessageHandler]
