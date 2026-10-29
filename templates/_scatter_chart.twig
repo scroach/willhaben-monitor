@@ -49,10 +49,10 @@
 				maintainAspectRatio: false,
 				scales: {
 					x: {
-						title: 'Fläche m²',
+						title: '{{ areaLabel|default('Fläche m²') }}',
 						type: 'linear',
 						position: 'bottom',
-						min: 90,
+						min: {{ minArea|default(90) }},
 					},
 					y: {
 						title: 'Preis €',
@@ -71,13 +71,13 @@
 							},
 							mode: 'xy',
 							limits: {
-								y: {min: 0, max: 1000000},
+								y: {min: 0, max: {{ maxPrice|default(1000000) }}},
 							},
 						}
 					},
 					title: {
 						display: true,
-						text: 'Scatter Positionierung'
+						text: 'Scatter Positionierung{% if typeLabel is defined %} – {{ typeLabel }}{% endif %}'
 					}
 				}
 			}

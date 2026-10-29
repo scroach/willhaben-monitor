@@ -1,0 +1,89 @@
+{% set id = random(1,10000) %}
+
+{% if trendData.labels is empty %}
+    <p>Keine Daten vorhanden.</p>
+{% else %}
+    <div style="height: 400px">
+        <canvas id="price-trend-chart-js-{{ id }}"></canvas>
+    </div>
+
+    <script>
+        (function () {
+            const ctx = document.getElementById('price-trend-chart-js-{{ id }}');
+
+            const data = {
+                labels: {{ trendData.labels|json_encode|raw }},
+                datasets: [
+                    {
+                        label: 'Ø Preis €',
+                        data: {{ trendData.avgPrice|json_encode|raw }},
+                        yAxisID: 'y',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                        tension: 0.3,
+                    },
+                    {
+                        label: 'Ø Preis €/m²',
+                        data: {{ trendData.avgPricePerSqm|json_encode|raw }},
+                        yAxisID: 'y1',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.15)',
+                        tension: 0.3,
+                    },
+                ],
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Ø Preis €',
+                            },
+                        },
+                        y1: {
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Ø Preis €/m²',
+                            },
+                        },
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Preisentwicklung {{ typeLabel }} (Ø Preise neuer Inserate pro Monat)',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.parsed.y;
+                                    const suffix = context.dataset.yAxisID === 'y1' ? ' €/m²' : ' €';
+
+                                    return context.dataset.label + ': ' + value.toLocaleString('de-AT', {maximumFractionDigits: 0}) + suffix;
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            new Chart(ctx, config);
+        })();
+    </script>
+{% endif %}

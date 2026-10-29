@@ -11,6 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ListingRepository::class)]
 #[ORM\Table(name: 'listings')]
 #[ORM\Index(name: 'idx_listings_immoscout_id', columns: ['immoscout_id'])]
+#[ORM\Index(name: 'idx_listings_type_first_seen', columns: ['type', 'first_seen'])]
+#[ORM\Index(name: 'idx_listings_type_last_seen', columns: ['type', 'last_seen'])]
 class Listing
 {
     #[ORM\Id]
@@ -156,6 +158,26 @@ class Listing
     public function getImageDirectory(): string
     {
         return $this->isImmoscout24() ? 'immoscout_images/' : 'willhaben_images/';
+    }
+
+    public function getTypeLabel(): string
+    {
+        return $this->type?->label() ?? 'Immobilie';
+    }
+
+    public function getTypePluralLabel(): string
+    {
+        return $this->type?->pluralLabel() ?? 'Immobilien';
+    }
+
+    public function getTypeValue(): string
+    {
+        return $this->type?->value ?? ListingType::HOUSE->value;
+    }
+
+    public function getDashboardRouteName(): string
+    {
+        return $this->type === ListingType::LAND ? 'dashboard_land' : 'dashboard_house';
     }
 
     public function getFirstSeen(): ?\DateTimeInterface

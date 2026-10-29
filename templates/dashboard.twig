@@ -2,9 +2,9 @@
 {% extends 'base.html.twig' %}
 
 {% block content %}
-	<h1>Dashboard</h1>
+	<h1>{{ typeLabel }}</h1>
 
-	<a class="btn btn-primary" href="{{ url('dispatch') }}">Fetch all listings now!</a>
+	<a class="btn btn-primary" href="{{ path('dispatch', {type: typeValue}) }}">Fetch all listings now!</a>
 
 	<div class="float-end">
 			{{ form_start(form) }}
@@ -16,23 +16,32 @@
 	</div>
 
     <h2>
-        {{ totalCount }} Listings total /
+        {{ totalCount }} {{ typeLabel }} total /
         {{ activeLastMonth }} aktiv im letzten Monat /
         {{ soldLastMonth }} "verkauft" im letzten Monat
     </h2>
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active" href="{{ path('dashboard') }}">Dashboard</a>
+            <a class="nav-link {{ typeValue == 'house' ? 'active' : '' }}" href="{{ path('dashboard_house') }}">Häuser</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link " href="{{ path('starred') }}"><i class="fas fa-star"></i></a>
+            <a class="nav-link {{ typeValue == 'land' ? 'active' : '' }}" href="{{ path('dashboard_land') }}">Grundstücke</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ path('starred') }}"><i class="fas fa-star"></i></a>
         </li>
     </ul>
 
+    <h2 class="mt-4">Statistik {{ typeLabel }}</h2>
 	{{ render(controller(
-		'App\\Controller\\ListingsController::scatterChartStats', {}
+		'App\\Controller\\ListingsController::scatterChartStats', {type: typeValue}
 	)) }}
+
+    <h2 class="mt-4">Preisentwicklung {{ typeLabel }}</h2>
+    {{ render(controller(
+        'App\\Controller\\ListingsController::priceTrend', {type: typeValue}
+    )) }}
 
     <div class="my-3">
 
@@ -56,9 +65,6 @@
 		</tr>
 		</thead>
 		<tbody>
-{#		{% for listing in listings %}#}
-{#            {% include 'single_listing_row.twig' with {listing: listing} only %}#}
-{#		{% endfor %}#}
 		</tbody>
 	</table>
     </div>
@@ -68,8 +74,9 @@
             $('#listings-table').DataTable({
                 serverSide: true,
                 processing: true,
+                order: [[10, 'desc']],
                 ajax: {
-                    url: '{{ path('render_listing_rows') }}',
+                    url: '{{ path('render_listing_rows', {type: typeValue}) }}',
                     type: 'GET'
                 },
                 columns: [

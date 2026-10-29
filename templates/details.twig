@@ -2,11 +2,12 @@
 
 {% block content %}
 
-	<a class="btn btn-outline-secondary" href="{{ path('dashboard') }}">Zurück</a>
+	<a class="btn btn-outline-secondary" href="{{ path(listing.dashboardRouteName) }}">Zurück</a>
 
 	<h1>
 		<a href="{{ path('star_listing', {id: listing.id}) }}"><i class="{{ listing.starred ? 'fas' : 'far' }} fa-star"></i></a>
 		{{ listing.title }}
+		<span class="badge bg-primary">{{ listing.typeLabel }}</span>
 		<span class="badge bg-dark">{{ listing.sourceLabel }}</span>
 	</h1>
 
@@ -40,7 +41,7 @@
 		</div>
 	</div>
 
-	<h1>Preispositionierung</h1>
+	<h1>Preispositionierung {{ listing.typePluralLabel }}</h1>
 	<div class="card">
 		<div class="card-body">
 			<ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -74,7 +75,14 @@
 		</div>
 	</div>
 
-
+	<h1>Preisentwicklung {{ listing.typePluralLabel }}</h1>
+	<div class="card">
+		<div class="card-body">
+			{{ render(controller(
+				'App\\Controller\\ListingsController::priceTrend', {type: listing.typeValue}
+			)) }}
+		</div>
+	</div>
 
 	<h1>Historische Daten</h1>
 	<div class="card">

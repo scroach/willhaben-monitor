@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Listing;
+use App\Entity\ListingType;
 use App\Message\FetchAllListingsMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -19,7 +20,24 @@ use Symfony\Component\Routing\Attribute\Route;
 class DashboardController extends AbstractController
 {
     #[Route('/', name: 'dashboard')]
-    public function index(EntityManagerInterface $em, Request $request): Response
+    public function index(): Response
+    {
+        return $this->redirectToRoute('dashboard_house');
+    }
+
+    #[Route('/houses', name: 'dashboard_house')]
+    public function houses(EntityManagerInterface $em, Request $request): Response
+    {
+        return $this->renderDashboard(ListingType::HOUSE, $em, $request);
+    }
+
+    #[Route('/land', name: 'dashboard_land')]
+    public function land(EntityManagerInterface $em, Request $request): Response
+    {
+        return $this->renderDashboard(ListingType::LAND, $em, $request);
+    }
+
+    private function renderDashboard(ListingType $type, EntityManagerInterface $em, Request $request): Response
     {
         $form = $this->createFormBuilder()
             ->add('willhabenId', TextType::class, ['attr' => ['class' => 'form-control', 'placeholder' => 'Willhaben / ImmoScout24 ID']])
@@ -42,43 +60,63 @@ class DashboardController extends AbstractController
             }
         }
 
-        $totalCount = $em->getRepository(Listing::class)->count();
+        $totalCount = (int) $em
+            ->getRepository(Listing::class)->createQueryBuilder('l')
+            ->select('count(l.id)')
+            ->andWhere('l.type = :type')
+            ->setParameter('type', $type->value)
+            ->getQuery()->getSingleScalarResult();
         $activeLastMonth = $em
             ->getRepository(Listing::class)->createQueryBuilder('l')
             ->select('count(l.id)')
+            ->andWhere('l.type = :type')
             ->andWhere('l.lastSeen > :month')
+            ->setParameter('type', $type->value)
             ->setParameter('month', new \DateTime('-1 month'))
             ->getQuery()->getSingleScalarResult();
         $soldLastMonth = $em
             ->getRepository(Listing::class)->createQueryBuilder('l')
             ->select('count(l.id)')
+            ->andWhere('l.type = :type')
             ->andWhere('l.lastSeen > :month and l.lastSeen < :week')
+            ->setParameter('type', $type->value)
             ->setParameter('month', new \DateTime('-1 month'))
             ->setParameter('week', new \DateTime('-1 week'))
             ->getQuery()->getSingleScalarResult();
 
         return $this->render('dashboard.twig', [
+            'typeValue' => $type->value,
+            'typeLabel' => $type->pluralLabel(),
             'totalCount' => $totalCount,
             'activeLastMonth' => $activeLastMonth,
             'soldLastMonth' => $soldLastMonth,
             'form' => $form->createView(),
         ]);
     }
+
     #[Route('/starred', name: 'starred')]
-    public function starred(EntityManagerInterface $em, Request $request): Response
+    public function starred(EntityManagerInterface $em): Response
     {
         return $this->render('listings.twig', [
-            'listings' => $em->getRepository(Listing::class)->findBy(['isStarred' => true]),
+            'listings' => $em->getRepository(Listing::class)->findBy(
+                ['isStarred' => true],
+                ['firstSeen' => 'DESC'],
+            ),
         ]);
     }
 
     #[Route('/dispatch', name: 'dispatch')]
-    public function dispatch(MessageBusInterface $bus, EntityManagerInterface $em): Response
+    public function dispatch(MessageBusInterface $bus, EntityManagerInterface $em, Request $request): Response
     {
         $bus->dispatch(new FetchAllListingsMessage('manual'));
         $em->flush();
 
-        return $this->redirectToRoute('dashboard');
+        return $this->redirectToRoute($this->dashboardRouteFor($request->query->getString('type', '')));
+    }
+
+    private function dashboardRouteFor(string $type): string
+    {
+        return ListingType::tryFrom($type) === ListingType::LAND ? 'dashboard_land' : 'dashboard_house';
     }
 
     #[Route('/update-aggregated-data', name: 'updateaggregateddata')]
@@ -97,6 +135,7 @@ class DashboardController extends AbstractController
         $draw = $request->query->getInt('draw', 1);
         $start = $request->query->getInt('start', 0);
         $length = $request->query->getInt('length', 10);
+        $type = ListingType::tryFrom($request->query->getString('type', ''));
 
         // Get search term from DataTables AJAX request
         $searchArray = $request->query->all('search');
@@ -110,6 +149,11 @@ class DashboardController extends AbstractController
             ->select('l')
             ->setFirstResult($start)
             ->setMaxResults($length);
+
+        if ($type !== null) {
+            $qb->andWhere('l.type = :type')
+                ->setParameter('type', $type->value);
+        }
 
         if (!empty($searchValue)) {
             $qb->andWhere('l.title LIKE :search')
@@ -142,8 +186,10 @@ class DashboardController extends AbstractController
                     $qb->addOrderBy($allowedSortColumns[$sortColumnName], $sortDirection);
                 }
             }
+
+            $qb->addOrderBy('l.id', 'DESC');
         } else {
-            $qb->orderBy('l.lastSeen', 'DESC');
+            $qb->orderBy('l.firstSeen', 'DESC')->addOrderBy('l.id', 'DESC');
         }
 
 
@@ -186,9 +232,15 @@ class DashboardController extends AbstractController
             ];
         }
 
+        $countQb = $em->getRepository(Listing::class)->createQueryBuilder('l')->select('count(l.id)');
+        if ($type !== null) {
+            $countQb->andWhere('l.type = :type')->setParameter('type', $type->value);
+        }
+        $recordsTotal = (int) $countQb->getQuery()->getSingleScalarResult();
+
         return new JsonResponse([
             'draw' => $draw,
-            'recordsTotal' => $em->getRepository(Listing::class)->count([]),
+            'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $totalRecords,
             'data' => $data,
         ]);

@@ -7,6 +7,7 @@
             {{ listing.title }}
         </a>
     </td>
+    <td>{{ listing.typeLabel }}</td>
     <td>{{ listing.sourceLabel }}</td>
     <td>{{ listing.area is null ? '?' : listing.area|format_number }}</td>
     <td>{{ listing.priceCurrent is null ? '?' : listing.priceCurrent|format_number }}</td>
